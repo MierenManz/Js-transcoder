@@ -1,3 +1,5 @@
+// Purely for testing the inputs and developing them
+
 const ffmpeg = require('fluent-ffmpeg');
 const ini = require('ini');
 const fs = require('fs');
