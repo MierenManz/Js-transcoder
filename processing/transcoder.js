@@ -12,7 +12,7 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
     if (err) throw err;
     var CBR = false;
     var gpuInputs = [];
-    var output = "../output.mp4";
+    var output = "./output.mp4";
     var vidbitr8 = Math.round((metadata.streams[0].bit_rate / 1000)) + "k";
     if (config.main.CBR == true) {
         var CBR = config.main.CBR;
