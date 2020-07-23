@@ -1,3 +1,5 @@
+// deprecated gpu transcoder
+
 const ffmpeg = require('fluent-ffmpeg');
 const fs = require('fs');
 var inputfile = process.argv[2];
