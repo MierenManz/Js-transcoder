@@ -4,5 +4,7 @@
 /processing/ffmpeg/LICENSE.txt
 /processing/ffmpeg/README.txt
 /processing/config.ini
+/processing/debug.txt
+/processing/log.txt
 /output.mp4
-/output.mp4
+/processing/etr.txt
