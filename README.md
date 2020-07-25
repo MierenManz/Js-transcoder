@@ -17,6 +17,8 @@ AHK-Transcoder is a Transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 4. Paste the copied error in the issue and then submit it.
 5. Wait a few days and a new version will be released
 # Changelog
+## v2 testing
+- Started on another rewrite to allow for faster and cleaner communications between front-end and back-end
 ## v2
 - Rewrote most of the code for communication between Front-End and Back-End
 ## v1
