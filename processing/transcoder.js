@@ -3,7 +3,7 @@ var start = Math.floor(new Date().getTime() / 1000);
 const ffmpeg = require('fluent-ffmpeg');
 const ini = require('ini');
 const fs = require('fs');
-const sendkeys = require('sendkeys-js');
+const spawn = require('child_process').spawn
 ffmpeg.setFfprobePath(__dirname + "/ffmpeg/bin/ffprobe.exe");
 
 var inputfile = process.argv[2];
@@ -14,7 +14,6 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
     var stdintxt = "./processing/log.txt";
     var decode = metadata.streams[0].codec_name;
     var CBR = false;
-    var etrcalc = 0
     var gpuInputs = [];
     var output = "./output.mp4";
     var vidbitr8 = Math.round((metadata.streams[0].bit_rate / 1000)) + "k";
@@ -53,7 +52,7 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
     };
     console.log(ifstates);
     fs.appendFileSync(stdintxt, ifstates);
-    sendkeys.send('{f15}');
+    AHKcomms("defaults")
     fs.writeFileSync(stdintxt, "");
     var proc = ffmpeg();
     proc.setFfmpegPath(__dirname + "/ffmpeg/bin/ffmpeg.exe")
@@ -64,39 +63,44 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
         .on('progress', function(progress) {
             var percentage = Math.round((progress.percent + Number.EPSILON) * 100) / 100;
             if (percentage > 100) percentage = 100;
-            if (etacalc = 5) {
-                var etacalc = 0;
+            if (etrcalc = 5) {
+                var etrcalc = 0;
                 var current = Math.floor(new Date().getTime() / 1000);
                 var timeleft = Math.round(((current - start) / percentage) * (100 - percentage));
                 fs.appendFile(etrloc, timeleft, (err) => {
                     if (err) throw err;
-                    sendkeys.send('{f13}');
+                    AHKcomms("etr");
                     return fs.writeFileSync(etrloc, "");
                 });
             } else {
-                var etacalc = etacalc + 1
+                var etrcalc = etrcalc + 1
             }
             var stuffs = "" + percentage + "% finished";
             fs.appendFile(stdintxt, stuffs, (err) => {
                 if (err) throw err;
-                sendkeys.send('{f16}');
+                AHKcomms("logging");
                 return fs.writeFileSync(stdintxt, "");
             })
         })
         .on('end', function() {
             fs.writeFileSync(stdintxt, "Render finished");
-            sendkeys.send('{f16}');
+            AHKcomms("logging");
             console.log("Render finished");
-            sendkeys.send('{f14}');
+            AHKcomms("stop");
             fs.unlinkSync(stdintxt);
             fs.unlinkSync(etrloc)
         })
         .on('error', function(err) {
             fs.appendFileSync(stdintxt, "\n" + err);
-            sendkeys.send('{f15}');
-            sendkeys.send('{f14}')
+            AHKcomms("defaults");
+            AHKcomms("stop");
             console.log(err.message);
             fs.unlinkSync(stdintxt);
             fs.unlinkSync(output);
     }).save(output);
 });
+
+function AHKcomms(message) {
+    ahk = spawn("C:/Program Files/AutoHotkey/AutoHotkey.exe", ['./processing/comms.ahk']);
+    ahk.stdin.write(message+'\r\n');
+}

@@ -56,7 +56,7 @@ Submit:
     gui, outputlog:add, edit, r1 vLOG ReadOnly x0 y146 w100
     gui, outputlog:add, edit, r10 vETR ReadOnly x100 y146 w100
     gui, outputlog:add, edit, r1 vETA ReadOnly x200 y146 w100
-    gui, outputlog:show, w350 h535
+    gui, outputlog:show, w350 h535,getstuff
     start := A_TickCount
     run, %ComSpec% /c node %A_ScriptDir%\processing\transcoder.js %inpFile%,,Hide
     return
@@ -76,28 +76,36 @@ Close:
     }
 }
 
-f14::
+OnMessage(5000, "etr")
+OnMessage(5001, "logging")
+OnMessage(5002, "defaults")
+OnMessage(5003, "stop")
+Return
+
+etr()
 {
-    stop := 1
+    msgbox etr
+	FileRead, etr, %A_ScriptDir%\processing\etr.txt
+    GuiControl, outputlog:, ETR, %etr%
     return
 }
-f15::
+logging()
 {
+    msgbox logging
+    FileRead, fc, %A_ScriptDir%\processing\log.txt
+    GuiControl, outputlog:, LOG, %fc%
+    return
+}
+defaults()
+{
+    msgbox defaults
     FileRead, fc, %A_ScriptDir%\processing\log.txt
     GuiControl, outputlog:, Defaults, %fc%
     return
 }
-
-f16::
+stop()
 {
-    FileRead, fc, %A_ScriptDir%\processing\log.txt
-    GuiControl, outputlog:, LOG, %fc%
-    ;GuiControl, outputlog:, ETA, %eta%
-    return
-}
-f13::
-{
-    FileRead, etr, %A_ScriptDir%\processing\etr.txt
-    GuiControl, outputlog:, ETR, %etr%
+    msgbox stop
+    stop := 1
     return
 }
