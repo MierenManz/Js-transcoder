@@ -1,11 +1,11 @@
 {
-  "name": "transcode",
+  "name": "ahk-trans",
   "version": "1.0.0",
-  "description": "",
+  "description": "transcode stuffs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "MierenMans",
   "license": "ISC",
   "dependencies": {
     "ffmpeg-probe": "^1.0.6",
