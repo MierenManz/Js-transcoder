@@ -1,5 +1,5 @@
-# AHK-Transcoder
-AHK-Transcoder is a Transcoder based of [FFMPEG](https://ffmpeg.org/) written in
+# Transcoder
+Custom transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 [node.js](https://nodejs.org/en/) (Back-end) and [Autohotkey](https://www.autohotkey.com/) (Front-end)
 
 # Installation
@@ -20,6 +20,8 @@ AHK-Transcoder is a Transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 ## v3
 - Rewrote communication code(again) for faster communication between Front-End and Back-End
 - Added support for AMD gpu encoding (I hope)
+## v2 testing
+- Started on another rewrite to allow for faster and cleaner communications between front-end and back-end
 ## v2
 - Rewrote most of the code for communication between Front-End and Back-End
 ## v1
