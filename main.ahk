@@ -1,11 +1,16 @@
 ﻿#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
-; #Warn  ; Enable warnings to assist with detecting common errors.
+#include %A_ScriptDir%\processing\ahk\lib\talk.ahk
+;#include %A_ScriptDir%\processing\ahk\lib\firstrun.ahk
+new talk("")
 SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 #SingleInstance, force
 Menu, Tray, Icon , %A_ScriptDir%\processing\icon.ico, 1, 1
 ; Set everything in the settings back to normal
 stop := 0
+etr := ""
+lgs := ""
+def := ""
 config := A_ScriptDir . "\processing\config.ini"
 IniWrite, true, %config%, main, CBR
 IniWrite, empty, %config%, main, BITRATE
@@ -35,11 +40,17 @@ Fileselect:
 
 Submit:
 {
+    runwait, %Comspec% /c wmic path win32_VideoController > .\processing\gpu.txt,, hide
+    FileRead, gpu, %A_ScriptDir%\processing\gpu.txt
+    If InStr(gpu, "GeForce") {
+        IniWrite, true, %config%, main, NVIDIA
+    } else {
+        IniWrite, false, %config%, main, NVIDIA
+    }
     Gui, Submit
     if (KBPS = "0") {
         IniWrite, empty, %config%, main, BITRATE
     } else {
-        msgbox %KBPS%
         IniWrite, %KBPS%, %config%, main, BITRATE
     }
     if (Cvbr = 1) {
@@ -57,11 +68,9 @@ Submit:
     gui, outputlog:add, edit, r10 vETR ReadOnly x100 y146 w100
     gui, outputlog:add, edit, r1 vETA ReadOnly x200 y146 w100
     gui, outputlog:show, w350 h535,getstuff
-    start := A_TickCount
     run, %ComSpec% /c node %A_ScriptDir%\processing\transcoder.js %inpFile%,,Hide
     return
 }
-
 guiClose:
 {
     exitapp
@@ -76,36 +85,27 @@ Close:
     }
 }
 
-OnMessage(5000, "etr")
-OnMessage(5001, "logging")
-OnMessage(5002, "defaults")
-OnMessage(5003, "stop")
-Return
-
-etr()
-{
-    msgbox etr
-	FileRead, etr, %A_ScriptDir%\processing\etr.txt
+etr:
+{   
     GuiControl, outputlog:, ETR, %etr%
     return
 }
-logging()
+
+lgs:
 {
-    msgbox logging
-    FileRead, fc, %A_ScriptDir%\processing\log.txt
-    GuiControl, outputlog:, LOG, %fc%
+    lgb := lgs . "% finished"
+    GuiControl, outputlog:, LOG, %lgs%
     return
 }
-defaults()
+
+def:
 {
-    msgbox defaults
-    FileRead, fc, %A_ScriptDir%\processing\log.txt
-    GuiControl, outputlog:, Defaults, %fc%
+    GuiControl, outputlog:, Defaults, %def%
     return
 }
-stop()
+
+stop:
 {
-    msgbox stop
     stop := 1
     return
 }
