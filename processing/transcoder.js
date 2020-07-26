@@ -10,11 +10,10 @@ var inputfile = process.argv[2];
 var config = ini.parse(fs.readFileSync(__dirname + '/config.ini', 'utf-8'));
 ffmpeg.ffprobe(inputfile, (err, metadata) => {
     if (err) throw err;
-    var etrloc = "./processing/etr.txt";
-    var stdintxt = "./processing/log.txt";
     var decode = metadata.streams[0].codec_name;
     var CBR = false;
     var gpuInputs = [];
+    var H265gpu = config.main.USE_h265 + config.main.USE_GPU;
     var output = "./output.mp4";
     var vidbitr8 = Math.round((metadata.streams[0].bit_rate / 1000)) + "k";
     if (config.main.CBR == true) {
@@ -29,15 +28,19 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
         var output = config.main.OUTPUT;
         var ifstates = ifstates + '\nCustom output path is specified!\nUsing "' + output + '" as output path';
     } else var ifstates = ifstates + "\nNo output path was specified!\nUsing default path";
-    var H265gpu = config.main.USE_h265 + config.main.USE_GPU;
     switch (H265gpu) {
         case "00":
             var codex = "libx264";
             var ifstates = ifstates + '\nUsing "' + codex + '" as codec' + "\nUsing cpu rendering!";
             break;
         case "01":
-            var gpuInputs = ["-vsync 0", "-hwaccel cuvid", "-hwaccel_device 0", `-c:v ${decode}_cuvid`];
-            var codex = "h264_nvenc";
+            if (config.main.NVIDIA == true) {
+                var gpuInputs = ["-vsync 0", "-hwaccel cuvid", "-hwaccel_device 0", `-c:v ${decode}_cuvid`];
+                var codex = "h264_nvenc";
+            } else {
+                var gpuInputs = ["-vsync 0", "-hwaccel dxva2", "-hwaccel_device 0"];
+                var codex = "h264_amf";
+            }
             var ifstates = ifstates + '\nUsing "' + codex + '" as codec' + '\nUsing Hardware Accelerated rendering! With these options:\n"' + gpuInputs + '"';
             break;
         case "10":
@@ -45,15 +48,18 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
             var ifstates = ifstates + '\nUsing "' + codex + '" as codec' + "\nUsing cpu rendering!";
             break;
         case "11":
-            var gpuInputs = ["-vsync 0", "-hwaccel cuvid", "-hwaccel_device 0", `-c:v ${decode}_cuvid`];
-            var codex = "hevc_nvenc";
+            if (config.main.NVIDIA == true) {
+                var gpuInputs = ["-vsync 0", "-hwaccel cuvid", "-hwaccel_device 0", `-c:v ${decode}_cuvid`];
+                var codex = "hevc_nvenc";
+            } else {
+                var gpuInputs = ["-vsync 0", "-hwaccel dxva2", "-hwaccel_device 0"];
+                var codex = "hevc_amf"
+            }
             var ifstates = ifstates + '\nUsing "' + codex + '" as codec' + '\nUsing Hardware Accelerated rendering! With these options:\n"' + gpuInputs + '"';
             break;
     };
     console.log(ifstates);
-    fs.appendFileSync(stdintxt, ifstates);
-    AHKcomms("defaults")
-    fs.writeFileSync(stdintxt, "");
+    AHKcomms("default", ifstates);
     var proc = ffmpeg();
     proc.setFfmpegPath(__dirname + "/ffmpeg/bin/ffmpeg.exe")
         .input(inputfile)
@@ -66,41 +72,36 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
             if (etrcalc = 5) {
                 var etrcalc = 0;
                 var current = Math.floor(new Date().getTime() / 1000);
-                var timeleft = Math.round(((current - start) / percentage) * (100 - percentage));
-                fs.appendFile(etrloc, timeleft, (err) => {
-                    if (err) throw err;
-                    AHKcomms("etr");
-                    return fs.writeFileSync(etrloc, "");
-                });
+                var timelefttotalS = Math.round(((current - start) / percentage) * (100 - percentage));
+                var timeleftM = Math.floor(timelefttotalS / 60);
+                var timeleftSadjusted = timelefttotalS - (60 * timeleftM);
+                var timelength = timeleftSadjusted.toString().length;
+                if (timelength !== 2) var timeleftSadjusted = "0" + timeleftSadjusted;
+                var timeleftformatted = `${timeleftM}:${timeleftSadjusted}`;
+                AHKcomms("etr", timeleftformatted);
             } else {
-                var etrcalc = etrcalc + 1
+                var etrcalc = etrcalc + 1;
             }
-            var stuffs = "" + percentage + "% finished";
-            fs.appendFile(stdintxt, stuffs, (err) => {
-                if (err) throw err;
-                AHKcomms("logging");
-                return fs.writeFileSync(stdintxt, "");
-            })
+            AHKcomms("logging", percentage);
         })
         .on('end', function() {
-            fs.writeFileSync(stdintxt, "Render finished");
-            AHKcomms("logging");
+            AHKcomms("logging", "render finished");
             console.log("Render finished");
-            AHKcomms("stop");
-            fs.unlinkSync(stdintxt);
-            fs.unlinkSync(etrloc)
+            AHKcomms("stop", "1");
+            process.exit(0)
         })
         .on('error', function(err) {
-            fs.appendFileSync(stdintxt, "\n" + err);
-            AHKcomms("defaults");
-            AHKcomms("stop");
+            AHKcomms("defaults", err.message);
+            AHKcomms("stop", "1");
             console.log(err.message);
-            fs.unlinkSync(stdintxt);
             fs.unlinkSync(output);
     }).save(output);
 });
 
-function AHKcomms(message) {
-    ahk = spawn("C:/Program Files/AutoHotkey/AutoHotkey.exe", ['./processing/comms.ahk']);
-    ahk.stdin.write(message+'\r\n');
-}
+function AHKcomms(type, data) {
+    ahk = spawn("C:/Program Files/AutoHotkey/AutoHotkey.exe", [`./processing/ahk/${type}.ahk`, data]);
+    ahk.stdout.on('end', function () {
+        ahk.stdin.end();
+    });
+    return
+};
