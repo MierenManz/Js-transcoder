@@ -17,14 +17,11 @@ Custom transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 4. Paste the copied error in the issue and then submit it.
 5. Wait a few days and a new version will be released
 # Changelog
-<<<<<<< HEAD
 ## v3
 - Rewrote communication code(again) for faster communication between Front-End and Back-End
 - Added support for AMD gpu encoding (I hope)
-=======
 ## v2 testing
 - Started on another rewrite to allow for faster and cleaner communications between front-end and back-end
->>>>>>> 4204f4aecfae83c7106a2238acd040bab6a509d5
 ## v2
 - Rewrote most of the code for communication between Front-End and Back-End
 ## v1
