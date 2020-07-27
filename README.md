@@ -1,3 +1,7 @@
+# BROKEN!
+## Currently this project does work but not reliably.
+## I will make a new version that is fully written in AHK
+## That will hopefully fix alot of the problems
 # Transcoder
 Custom transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 [node.js](https://nodejs.org/en/) (Back-end) and [Autohotkey](https://www.autohotkey.com/) (Front-end)
