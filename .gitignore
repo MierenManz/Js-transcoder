@@ -6,7 +6,8 @@
 /processing/config.ini
 /processing/debug.txt
 /processing/log.txt
-/output.mp4
 /processing/etr.txt
+/processing/gpu.txt
+/output.mp4
 /amd.txt
 /nvid.txt

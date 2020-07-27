@@ -82,26 +82,25 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
             } else {
                 var etrcalc = etrcalc + 1;
             }
-            AHKcomms("logging", percentage);
+            AHKcomms("logging", percentage + "% Finished");
         })
         .on('end', function() {
-            AHKcomms("logging", "render finished");
+            AHKcomms("logging", "Render Finished");
             console.log("Render finished");
-            AHKcomms("stop", "1");
             process.exit(0)
         })
         .on('error', function(err) {
             AHKcomms("defaults", err.message);
-            AHKcomms("stop", "1");
             console.log(err.message);
             fs.unlinkSync(output);
+            process.exit(0);
     }).save(output);
 });
 
 function AHKcomms(type, data) {
     ahk = spawn("C:/Program Files/AutoHotkey/AutoHotkey.exe", [`./processing/ahk/${type}.ahk`, data]);
     ahk.stdout.on('end', function () {
-        ahk.stdin.end();
+        ahk.stdin.kill();
     });
     return
 };

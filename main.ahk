@@ -65,8 +65,7 @@ Submit:
     gui, outputlog:add, button, gClose x87 y5 w175 h25, Close window
     gui, outputlog:add, edit, r8 vDefaults ReadOnly x0 y35 w350
     gui, outputlog:add, edit, r1 vLOG ReadOnly x0 y146 w100
-    gui, outputlog:add, edit, r10 vETR ReadOnly x100 y146 w100
-    gui, outputlog:add, edit, r1 vETA ReadOnly x200 y146 w100
+    gui, outputlog:add, edit, r1 vETR ReadOnly x100 y146 w100
     gui, outputlog:show, w350 h535,getstuff
     run, %ComSpec% /c node %A_ScriptDir%\processing\transcoder.js %inpFile%,,Hide
     return
@@ -93,7 +92,8 @@ etr:
 
 lgs:
 {
-    lgb := lgs . "% finished"
+    if (lgs > 90)
+        stop = 1
     GuiControl, outputlog:, LOG, %lgs%
     return
 }
@@ -101,11 +101,5 @@ lgs:
 def:
 {
     GuiControl, outputlog:, Defaults, %def%
-    return
-}
-
-stop:
-{
-    stop := 1
     return
 }
