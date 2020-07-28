@@ -5,6 +5,7 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 Menu, Tray, Icon , %A_ScriptDir%\processing\icon.ico, 1, 1
 ; Set everything in the settings back to normal
 stop := 0
+transcoder := A_ScriptDir . "\processing\transcoder.exe"
 config := A_ScriptDir . "\processing\config.txt"
 if !FileExist(config)
 {
@@ -30,12 +31,16 @@ Fileselect:
 {   
     FileSelectFile, inpFile, 2
     GuiControl,, Filesel, File Selected!
-    commando := "node " A_ScriptDir "\processing\transcoder.js" inpFile
+    Inptfile = "%inpFile%"
     return
 }
 
 Submit:
 {
+    if !inpFile {
+        msgbox, hey, you forgot to give me something to transcode :3
+        return
+    }
     runwait, %Comspec% /c wmic path win32_VideoController > .\processing\gpu.txt,, hide
     FileRead, gpu, %A_ScriptDir%\processing\gpu.txt
     If InStr(gpu, "GeForce") {
@@ -59,11 +64,11 @@ Submit:
     gui, Destroy
     gui, outputlog:new, -0xC00000
     gui, outputlog:add, button, gClose x87 y5 w175 h25, Close window
-    gui, outputlog:add, edit, r7 vDefaults ReadOnly x0 y35 w350
-    gui, outputlog:add, edit, r1 vLOG ReadOnly x0 y140 w100
-    gui, outputlog:add, edit, r1 vETR ReadOnly x100 y140 w100
-    gui, outputlog:show, w350 h535,getstuff
-    StdOutStream( "node.exe " A_ScriptDir "\processing\transcoder.js " inpFile, "StdOutStream_Callback")
+    gui, outputlog:add, edit, r7 vDefaults +center ReadOnly x0 y35 w350
+    gui, outputlog:add, edit, r1 vLOG +center ReadOnly x75 y135 w100
+    gui, outputlog:add, edit, r1 vETR +center ReadOnly x176 y135 w100
+    gui, outputlog:show, w350 h235,getstuff
+    StdOutStream( "node.exe " A_ScriptDir "\processing\transcoder.js " Inptfile, "StdOutStream_Callback")
     return
 }
 guiClose:

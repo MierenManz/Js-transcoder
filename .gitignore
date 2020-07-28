@@ -1,15 +1,7 @@
 /processing/node_modules
-/processing/ffmpeg/doc
-/processing/ffmpeg/presets
-/processing/ffmpeg/LICENSE.txt
-/processing/ffmpeg/README.txt
-/processing/config.ini
-/processing/debug.txt
 /processing/log.txt
 /processing/etr.txt
 /processing/gpu.txt
 /processing/package-lock.json
-/processing/unused
+/unused
 /output.mp4
-/amd.txt
-/nvid.txt
