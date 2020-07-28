@@ -43,6 +43,7 @@ Submit:
     }
     runwait, %Comspec% /c wmic path win32_VideoController > .\processing\gpu.txt,, hide
     FileRead, gpu, %A_ScriptDir%\processing\gpu.txt
+    FileDelete, %A_ScriptDir%\processing\gpu.txt
     If InStr(gpu, "GeForce") {
         FileAppend, true`n, %config%
     } else {

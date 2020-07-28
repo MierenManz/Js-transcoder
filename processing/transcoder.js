@@ -1,7 +1,7 @@
 var start = Math.floor(new Date().getTime() / 1000);
 const ffmpeg = require('fluent-ffmpeg');
 const fs = require('fs');
-ffmpeg.setFfprobePath(__dirname + "/ffmpeg/bin/ffprobe.exe");
+ffmpeg.setFfprobePath(__dirname + "/ffmpeg/ffprobe.exe");
 
 var inputfile = process.argv[2];
 var config = fs.readFileSync(__dirname + '/config.txt', 'utf-8');
@@ -58,7 +58,7 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
     };
     console.log("defs" + ifstates);
     var proc = ffmpeg();
-    proc.setFfmpegPath(__dirname + "/ffmpeg/bin/ffmpeg.exe")
+    proc.setFfmpegPath(__dirname + "/ffmpeg/ffmpeg.exe")
         .input(inputfile)
         .videoBitrate(vidbitr8, CBR)
         .inputOption(gpuInputs)
