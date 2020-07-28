@@ -31,9 +31,9 @@ Custom transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 - Started on another rewrite to allow for faster and cleaner communications between front-end and back-end
 ## v1.2.0
 - Rewrote most of the code for communication between Front-End and Back-End
-## v1.1
+## v1.1.0
 - Changed directory structure for a more organized environment
-## v1.0
+## v1.0.0
 - Fixing bugs in Dev build v3 and v4
 ## Dev build v4
 - Making the front-end
