@@ -76,11 +76,11 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
             var timeleftformatted = `${timeleftM}:${timeleftSadjusted}`;
             console.log("estr" + timeleftformatted + " left");
             var etrcalc = etrcalc + 1;
-            console.log(`perc${percentage}% Finished`);
+            console.log(`perc${percentage}% Finished `);
         })
         .on('end', function() {
-            console.log("stop");
             console.log("defsRender Finished");
+            console.log("stop");
             process.exit(0);
         })
         .on('error', function(err) {

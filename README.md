@@ -23,8 +23,10 @@ Custom transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 - Currently you need to download both [node.js](https://nodejs.org/en/) and [Autohotkey](https://www.autohotkey.com/) for running the sourcecode!
 - HW Accel is supported, but only on hardware that supports, AMF or NVENC/CUVID
 # Known Bugs
-- Small visual bug in the percentage window when clicking "Close Window" while transcoding is not finished yet
+- NONE! :D
 # Changelog
+## v1.5.2
+- fixed a Small visual bug in the percentage window when clicking "Close Window" while transcoding is not finished yet 
 ## v1.5.1
 - Removed unused files
 - Fixed a bug where you could not select files where the filename had a space in it

@@ -69,6 +69,7 @@ Submit:
     gui, outputlog:add, edit, r1 vLOG +center ReadOnly x75 y135 w100
     gui, outputlog:add, edit, r1 vETR +center ReadOnly x176 y135 w100
     gui, outputlog:show, w350 h235,getstuff
+    start := A_TickCount
     StdOutStream( "node.exe " A_ScriptDir "\processing\transcoder.js " Inptfile, "StdOutStream_Callback")
     return
 }
@@ -79,12 +80,7 @@ guiClose:
 Close:
 {
     if (stop = "0") {
-        tooltip, Sorry but the render is not finished yet!
-        now := A_TickCount
-        1sec := now + 1000
-        while (1sec > A_TickCount)
-        {}
-        tooltip,
+        run, %A_ScriptDir%\processing\tooltip.exe
         return
     } else {
         exitapp   
@@ -155,16 +151,18 @@ StdOutStream_Callback( data, n ) {
     Static LOG
     Static ETS
     casing := SubStr(data, 1, 4)
-    stuffs := SubStr(data, 5)
     Switch casing
     {
         case "perc":
+            stuffs := SubStr(data, 5, 16)
             GuiControl, outputlog:, LOG, %stuffs%
             return
         case "estr":
+            stuffs := SubStr(data, 5, 5)
             GuiControl, outputlog:, ETR, %stuffs%
             return
         case "defs":
+            stuffs := SubStr(data, 5)
             GuiControl, outputlog:, Defaults, %stuffs%
             return
         case "stop":
