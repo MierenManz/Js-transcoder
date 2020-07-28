@@ -10,6 +10,7 @@ Custom transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 
 ## Notes
 - Currently you need to download both [node.js](https://nodejs.org/en/) and [Autohotkey](https://www.autohotkey.com/). This will be changed in later builds but as of right now it will not
+- HW Accel is supported, but only on hardware that supports, AMF or Nvenc/Cuvid
 ## Troubleshooting
 1. If there is any problem, click debug.ahk and select the same file
 2. After a few seconds it should open a small small console with a errorcode.
