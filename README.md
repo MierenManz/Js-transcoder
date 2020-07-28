@@ -44,4 +44,4 @@ Custom transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 ## Dev build v2
 - Building transcoder interface
 ## Dev build v1
-- Getting metadata and formatting inputs
+- Getting metadata and formatting inputsr
