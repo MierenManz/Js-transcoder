@@ -3,38 +3,38 @@ var start = Math.floor(new Date().getTime() / 1000);
 const ffmpeg = require('fluent-ffmpeg');
 const ini = require('ini');
 const fs = require('fs');
-const spawn = require('child_process').spawn
 ffmpeg.setFfprobePath(__dirname + "/ffmpeg/bin/ffprobe.exe");
 
 var inputfile = process.argv[2];
-var config = ini.parse(fs.readFileSync(__dirname + '/config.ini', 'utf-8'));
+var config = fs.readFileSync(__dirname + '/config.txt', 'utf-8')
+var config = config.toString().split("\r\n")
+var NVIDIA = config[0]
+var BITRATE = config[1]
+var CBVR = config[2]
+var USE_GPU = config[3]
+var USE_H265 = config[4]
 ffmpeg.ffprobe(inputfile, (err, metadata) => {
     if (err) throw err;
     var decode = metadata.streams[0].codec_name;
     var CBR = false;
     var gpuInputs = [];
-    var H265gpu = config.main.USE_h265 + config.main.USE_GPU;
-    var output = "./output.mp4";
+    var H265gpu = USE_H265 + USE_GPU;
     var vidbitr8 = Math.round((metadata.streams[0].bit_rate / 1000)) + "k";
-    if (config.main.CBR == true) {
-        var CBR = config.main.CBR;
+    if (CBVR == "true") {
+        var CBR = CBVR;
         var ifstates = "Constant BitRate (CBR) is enabled!";
     } else var ifstates = "Variable BitRate (VBR) is enabled!";
-    if (config.main.BITRATE !== "empty") {
-        var vidbitr8 = config.main.BITRATE + "k";
+    if (BITRATE !== "empty") {
+        var vidbitr8 = BITRATE + "k";
         var ifstates = ifstates + "\nCustom bitrate is specified!\nUsing " + vidbitr8 + "bps";
     } else var ifstates = ifstates + "\nNo bitrate was specified!\nUsing bitrate of original file which is " + vidbitr8 + "bps";
-    if (config.main.OUTPUT !== "empty") {
-        var output = config.main.OUTPUT;
-        var ifstates = ifstates + '\nCustom output path is specified!\nUsing "' + output + '" as output path';
-    } else var ifstates = ifstates + "\nNo output path was specified!\nUsing default path";
     switch (H265gpu) {
         case "00":
             var codex = "libx264";
             var ifstates = ifstates + '\nUsing "' + codex + '" as codec' + "\nUsing cpu rendering!";
             break;
         case "01":
-            if (config.main.NVIDIA == true) {
+            if (NVIDIA == "true") {
                 var gpuInputs = ["-vsync 0", "-hwaccel cuvid", "-hwaccel_device 0", `-c:v ${decode}_cuvid`];
                 var codex = "h264_nvenc";
             } else {
@@ -48,7 +48,7 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
             var ifstates = ifstates + '\nUsing "' + codex + '" as codec' + "\nUsing cpu rendering!";
             break;
         case "11":
-            if (config.main.NVIDIA == true) {
+            if (NVIDIA == "true") {
                 var gpuInputs = ["-vsync 0", "-hwaccel cuvid", "-hwaccel_device 0", `-c:v ${decode}_cuvid`];
                 var codex = "hevc_nvenc";
             } else {
@@ -58,8 +58,7 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
             var ifstates = ifstates + '\nUsing "' + codex + '" as codec' + '\nUsing Hardware Accelerated rendering! With these options:\n"' + gpuInputs + '"';
             break;
     };
-    console.log(ifstates);
-    AHKcomms("default", ifstates);
+    console.log("defs" + ifstates);
     var proc = ffmpeg();
     proc.setFfmpegPath(__dirname + "/ffmpeg/bin/ffmpeg.exe")
         .input(inputfile)
@@ -78,29 +77,21 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
                 var timelength = timeleftSadjusted.toString().length;
                 if (timelength !== 2) var timeleftSadjusted = "0" + timeleftSadjusted;
                 var timeleftformatted = `${timeleftM}:${timeleftSadjusted}`;
-                AHKcomms("etr", timeleftformatted);
+                console.log("estr" + timeleftformatted)
             } else {
                 var etrcalc = etrcalc + 1;
             }
-            AHKcomms("logging", percentage + "% Finished");
+            console.log(`perc${percentage}% Finished`)
         })
         .on('end', function() {
-            AHKcomms("logging", "Render Finished");
-            console.log("Render finished");
+            console.log("stop");
+            console.log("defsRender Finished")
             process.exit(0)
         })
         .on('error', function(err) {
-            AHKcomms("defaults", err.message);
-            console.log(err.message);
-            fs.unlinkSync(output);
+            console.log("defs" + err.message);
+            console.log("stop")
+            fs.unlinkSync('./output.mp4');
             process.exit(0);
-    }).save(output);
+    }).save('./output.mp4');
 });
-
-function AHKcomms(type, data) {
-    ahk = spawn("C:/Program Files/AutoHotkey/AutoHotkey.exe", [`./processing/ahk/${type}.ahk`, data]);
-    ahk.stdout.on('end', function () {
-        ahk.stdin.kill();
-    });
-    return
-};

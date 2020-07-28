@@ -1,9 +1,3 @@
-# BROKEN!
-## Currently this project does work but not reliably.
-## I will make a new version that is fully written in AHK
-## That will hopefully fix alot of the problems
-## Currently the problem is that nodejs can't properly call back to main.ahk
-## Which leads to data that either takes too long to update or it does not update at all!
 # Transcoder
 Custom transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 [node.js](https://nodejs.org/en/) (Back-end) and [Autohotkey](https://www.autohotkey.com/) (Front-end)
@@ -23,16 +17,23 @@ Custom transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 4. Paste the copied error in the issue and then submit it.
 5. Wait a few days and a new version will be released
 # Changelog
-## v3
+## v1.5.0
+- Rewrote communication code(yes, again) That will most likely fix issues that were there in v1.2.0 - v1.4.0
+- Removed dependency on [ini](https://www.npmjs.com/package/ini) and made my own config parser
+- Removed unused files e.g. scripts to test stuff and deprecated stuff
+## v1.4.0
+- Rewrote communication code(again) so now it should be reliable and even a little faster
+- Removed some code for faster execution
+## v1.3.0
 - Rewrote communication code(again) for faster communication between Front-End and Back-End
 - Added support for AMD gpu encoding (I hope)
-## v2 testing
+## v1.2.5
 - Started on another rewrite to allow for faster and cleaner communications between front-end and back-end
-## v2
+## v1.2.0
 - Rewrote most of the code for communication between Front-End and Back-End
-## v1
+## v1.1
 - Changed directory structure for a more organized environment
-## Dev build v5
+## v1.0
 - Fixing bugs in Dev build v3 and v4
 ## Dev build v4
 - Making the front-end

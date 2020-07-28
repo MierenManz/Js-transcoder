@@ -1,22 +1,17 @@
-﻿#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
-#include %A_ScriptDir%\processing\ahk\lib\talk.ahk
-;#include %A_ScriptDir%\processing\ahk\lib\firstrun.ahk
-new talk("")
+#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
 SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
 SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 #SingleInstance, force
 Menu, Tray, Icon , %A_ScriptDir%\processing\icon.ico, 1, 1
 ; Set everything in the settings back to normal
 stop := 0
-etr := ""
-lgs := ""
-def := ""
-config := A_ScriptDir . "\processing\config.ini"
-IniWrite, true, %config%, main, CBR
-IniWrite, empty, %config%, main, BITRATE
-IniWrite, empty, %config%, main, OUTPUT
-IniWrite, 1, %config%, main, USE_h265
-IniWrite, 1, %config%, main, USE_GPU
+config := A_ScriptDir . "\processing\config.txt"
+if !FileExist(config)
+{
+  runwait, %ComSpec% /c cd processing && npm install,, hide
+} else {
+    FileDelete, %config%
+}
 
 ; Start the gui making for a small control panel
 gui, new
@@ -35,6 +30,7 @@ Fileselect:
 {   
     FileSelectFile, inpFile, 2
     GuiControl,, Filesel, File Selected!
+    commando := "node " A_ScriptDir "\processing\transcoder.js" inpFile
     return
 }
 
@@ -43,31 +39,31 @@ Submit:
     runwait, %Comspec% /c wmic path win32_VideoController > .\processing\gpu.txt,, hide
     FileRead, gpu, %A_ScriptDir%\processing\gpu.txt
     If InStr(gpu, "GeForce") {
-        IniWrite, true, %config%, main, NVIDIA
+        FileAppend, true`n, %config%
     } else {
-        IniWrite, false, %config%, main, NVIDIA
+        FileAppend, false`n, %config%
     }
     Gui, Submit
     if (KBPS = "0") {
-        IniWrite, empty, %config%, main, BITRATE
+        FileAppend, empty`n, %config%
     } else {
-        IniWrite, %KBPS%, %config%, main, BITRATE
+        FileAppend, %KBPS%`n, %config%
     }
     if (Cvbr = 1) {
-        IniWrite, true, %config%, main, CBR
+        FileAppend, true`n, %config%
     } else {
-        IniWrite, false, %config%, main, CBR
+        FileAppend, false`n, %config%
     }
-    IniWrite, %Gpu%, %config%, main, USE_GPU
-    IniWrite, %H265%, %config%, main, USE_h265
+    FileAppend, %Gpu%`n, %config%
+    FileAppend, %H265%`n, %config%
     gui, Destroy
     gui, outputlog:new, -0xC00000
     gui, outputlog:add, button, gClose x87 y5 w175 h25, Close window
-    gui, outputlog:add, edit, r8 vDefaults ReadOnly x0 y35 w350
-    gui, outputlog:add, edit, r1 vLOG ReadOnly x0 y146 w100
-    gui, outputlog:add, edit, r1 vETR ReadOnly x100 y146 w100
+    gui, outputlog:add, edit, r7 vDefaults ReadOnly x0 y35 w350
+    gui, outputlog:add, edit, r1 vLOG ReadOnly x0 y140 w100
+    gui, outputlog:add, edit, r1 vETR ReadOnly x100 y140 w100
     gui, outputlog:show, w350 h535,getstuff
-    run, %ComSpec% /c node %A_ScriptDir%\processing\transcoder.js %inpFile%,,Hide
+    StdOutStream( "node.exe " A_ScriptDir "\processing\transcoder.js " inpFile, "StdOutStream_Callback")
     return
 }
 guiClose:
@@ -77,29 +73,101 @@ guiClose:
 Close:
 {
     if (stop = "0") {
-        msgbox, Sorry but the render is not finished yet!
+        tooltip, Sorry but the render is not finished yet!
+        now := A_TickCount
+        1sec := now + 1000
+        while (1sec > A_TickCount)
+        {}
+        tooltip,
         return
     } else {
         exitapp   
     }
 }
 
-etr:
-{   
-    GuiControl, outputlog:, ETR, %etr%
-    return
+StdOutStream( sCmd, Callback = "" ) { ; Modified  :  SKAN 31-Aug-2013 http://goo.gl/j8XJXY                             
+  Static StrGet := "StrGet"           ; Thanks to :  HotKeyIt         http://goo.gl/IsH1zs                                   
+                                      ; Original  :  Sean 20-Feb-2007 http://goo.gl/mxCdn
+                                    
+  DllCall( "CreatePipe", UIntP,hPipeRead, UIntP,hPipeWrite, UInt,0, UInt,0 )
+  DllCall( "SetHandleInformation", UInt,hPipeWrite, UInt,1, UInt,1 )
+
+  if(a_ptrSize=8){
+    VarSetCapacity( STARTUPINFO, 104, 0  )      ; STARTUPINFO          ;  http://goo.gl/fZf24
+    NumPut( 68,         STARTUPINFO,  0 )      ; cbSize
+    NumPut( 0x100,      STARTUPINFO, 60 )      ; dwFlags    =>  STARTF_USESTDHANDLES = 0x100 
+    NumPut( hPipeWrite, STARTUPINFO, 88 )      ; hStdOutput
+    NumPut( hPipeWrite, STARTUPINFO, 96 )      ; hStdError
+    VarSetCapacity( PROCESS_INFORMATION, 32 )  ; PROCESS_INFORMATION  ;  http://goo.gl/b9BaI      
+  }else{
+    VarSetCapacity( STARTUPINFO, 68, 0  )      ; STARTUPINFO          ;  http://goo.gl/fZf24
+    NumPut( 68,         STARTUPINFO,  0 )      ; cbSize
+    NumPut( 0x100,      STARTUPINFO, 44 )      ; dwFlags    =>  STARTF_USESTDHANDLES = 0x100 
+    NumPut( hPipeWrite, STARTUPINFO, 60 )      ; hStdOutput
+    NumPut( hPipeWrite, STARTUPINFO, 64 )      ; hStdError
+    VarSetCapacity( PROCESS_INFORMATION, 16 )  ; PROCESS_INFORMATION  ;  http://goo.gl/b9BaI     
+  }
+  If ! DllCall( "CreateProcess", UInt,0, UInt,&sCmd, UInt,0, UInt,0 ;  http://goo.gl/USC5a
+              , UInt,1, UInt,0x08000000, UInt,0, UInt,0
+              , UInt,&STARTUPINFO, UInt,&PROCESS_INFORMATION ) 
+   Return "" 
+   , DllCall( "CloseHandle", UInt,hPipeWrite ) 
+   , DllCall( "CloseHandle", UInt,hPipeRead )
+   , DllCall( "SetLastError", Int,-1 )     
+
+  hProcess := NumGet( PROCESS_INFORMATION, 0 )                 
+  if(a_is64bitOS)
+    hThread  := NumGet( PROCESS_INFORMATION, 8 )                      
+  else
+    hThread  := NumGet( PROCESS_INFORMATION, 4 )                      
+  DllCall( "CloseHandle", UInt,hPipeWrite )
+
+  AIC := ( SubStr( A_AhkVersion, 1, 3 ) = "1.0" )                   ;  A_IsClassic 
+  VarSetCapacity( Buffer, 4096, 0 ), nSz := 0 
+  
+  While DllCall( "ReadFile", UInt,hPipeRead, UInt,&Buffer, UInt,4094, UIntP,nSz, Int,0 ) {
+
+   tOutput := ( AIC && NumPut( 0, Buffer, nSz, "Char" ) && VarSetCapacity( Buffer,-1 ) ) 
+              ? Buffer : %StrGet%( &Buffer, nSz, "CP850" )
+
+   Isfunc( Callback ) ? %Callback%( tOutput, A_Index ) : sOutput .= tOutput
+
+  }                   
+ 
+  DllCall( "GetExitCodeProcess", UInt,hProcess, UIntP,ExitCode )
+  DllCall( "CloseHandle",  UInt,hProcess  )
+  DllCall( "CloseHandle",  UInt,hThread   )
+  DllCall( "CloseHandle",  UInt,hPipeRead )
+  DllCall( "SetLastError", UInt,ExitCode  )
+
+Return Isfunc( Callback ) ? %Callback%( "", 0 ) : sOutput      
 }
 
-lgs:
-{
-    if (lgs > 90)
-        stop = 1
-    GuiControl, outputlog:, LOG, %lgs%
-    return
-}
+StdOutStream_Callback( data, n ) {
+    Static D
+    Static Defaults
+    Static LOG
+    Static ETS
+    casing := SubStr(data, 1, 4)
+    stuffs := SubStr(data, 5)
+    Switch casing
+    {
+        case "perc":
+            GuiControl, outputlog:, LOG, %stuffs%
+            return
+        case "estr":
+            GuiControl, outputlog:, ETR, %stuffs%
+            return
+        case "defs":
+            GuiControl, outputlog:, Defaults, %stuffs%
+            return
+        case "stop":
+            global stop = 1
+            return
+  }
+  ;ToolTip % D .= data
 
-def:
-{
-    GuiControl, outputlog:, Defaults, %def%
-    return
+  if ! ( n ) {
+    Return
+  }
 }

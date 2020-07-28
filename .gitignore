@@ -8,6 +8,8 @@
 /processing/log.txt
 /processing/etr.txt
 /processing/gpu.txt
+/processing/package-lock.json
+/processing/unused
 /output.mp4
 /amd.txt
 /nvid.txt
