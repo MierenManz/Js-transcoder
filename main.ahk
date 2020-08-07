@@ -5,6 +5,10 @@ SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
 Menu, Tray, Icon , %A_ScriptDir%\processing\icon.ico, 1, 1
 ; Set everything in the settings back to normal
 stop := 0
+aspw := 16
+asph := 9
+reswidth := 1920
+resheight := 1080
 transcoder := A_ScriptDir . "\processing\transcoder.exe"
 config := A_ScriptDir . "\processing\config.txt"
 if !FileExist(config)
@@ -15,16 +19,22 @@ if !FileExist(config)
 }
 
 ; Start the gui making for a small control panel
-gui, new
-gui, add, Button, gFileselect vFilesel x2 y2 w80 h25, Select File
-gui, Add, CheckBox, x2 y32 vCvbr,Use Constant Bitrate
-gui, add, CheckBox, x2 y47 vH265,Use HEVC encoder
-gui, Add, CheckBox, x2 y62 vGpu,Use GPU transcoding
-Gui, add, Text, x145 y2, bitrate(kbps)
-Gui, Add, Edit, x135 y17 w80 h20 Number
-Gui, Add, UpDown, vKBPS 0x80 Range0-2147483647
-Gui, add, Button, gSubmit x134 y47 w80 h30, Start conversion
-gui, show,, AHK-Trans
+gui, main:New
+gui, main:Add, Button, gFileselect vFilesel x2 y2 w80 h25, Select File
+gui, main:Add, CheckBox, x2 y32 vCvbr,Use Constant Bitrate
+gui, main:Add, CheckBox, x2 y47 vH265,Use HEVC encoder
+gui, main:Add, CheckBox, x2 y62 vGpu,Use GPU transcoding
+Gui, main:Add, Text, +center x140 y3, bitrate(kbps)
+Gui, main:Add, Edit, +center x200 y2 w80 h20 Number
+Gui, main:Add, UpDown, vKBPS 0x80 Range0-2147483647
+Gui, main:Add, Text, +center x170 y34, Width
+Gui, main:Add, Edit, +center ReadOnly x200 y30 w80 h20 Number
+Gui, main:Add, UpDown, gsizecontrol1 vvWidth 0x80 Range0-2147483647
+Gui, main:Add, Text, +center x167 y53, Height
+Gui, main:Add, Edit, +center gsizecontrol x200 y50 w80 h20 Number
+Gui, main:Add, UpDown, gsizecontrol vvHeight 0x80 Range0-2147483647
+Gui, main:Add, Button, gSubmit x105 y100 w80 h30, Start conversion
+gui, main:Show,, AHK-Trans
 return
 
 Fileselect:
@@ -32,9 +42,28 @@ Fileselect:
     FileSelectFile, inpFile, 2
     GuiControl,, Filesel, File Selected!
     Inptfile = "%inpFile%"
+    StdOutStream( "node.exe " A_ScriptDir "\processing\probe.js " Inptfile, "probe_Callback")
     return
 }
 
+
+sizecontrol1:
+{
+    gui, Submit, nohide
+    aspw := Trim(aspw)
+    asph := Trim(asph)
+    height := vWidth / aspw * asph
+    GuiControl, main:, vHeight, %height%
+    return
+}
+
+sizecontrol:
+{
+    gui, Submit, nohide
+    width := vHeight / asph * aspw
+    GuiControl, main:, vWidth, %width%
+    return
+}
 Submit:
 {
     if !inpFile {
@@ -62,15 +91,25 @@ Submit:
     }
     FileAppend, %Gpu%`n, %config%
     FileAppend, %H265%`n, %config%
+    if (vWidth = 0) {
+      FileAppend, %reswidth%`n, %config%
+    } else {
+      FileAppend, %vWidth%`n, %config%
+    }
+    if (vHeight = 0) {
+      FileAppend, %resheight%`n, %config%
+    } else {
+      FileAppend, %vHeight%`n, %config%
+    }
     gui, Destroy
-    gui, outputlog:new, -0xC00000
-    gui, outputlog:add, button, gClose x87 y5 w175 h25, Close window
-    gui, outputlog:add, edit, r7 vDefaults +center ReadOnly x0 y35 w350
-    gui, outputlog:add, edit, r1 vLOG +center ReadOnly x75 y135 w100
-    gui, outputlog:add, edit, r1 vETR +center ReadOnly x176 y135 w100
-    gui, outputlog:show, w350 h235,getstuff
+    gui, outputlog:New, -0xC00000
+    gui, outputlog:Add, Button, gClose x87 y5 w175 h25, Close window
+    gui, outputlog:Add, Edit, r7 vDefaults +center ReadOnly x0 y35 w350
+    gui, outputlog:Add, Edit, r1 vLOG +center ReadOnly x75 y135 w100
+    gui, outputlog:Add, Edit, r1 vETR +center ReadOnly x176 y135 w100
+    gui, outputlog:Show, w350 h235,getstuff
     start := A_TickCount
-    StdOutStream( "node.exe " A_ScriptDir "\processing\transcoder.js " Inptfile, "StdOutStream_Callback")
+    StdOutStream( "node.exe " A_ScriptDir "\processing\transcoder.js " Inptfile, "main_Callback")
     return
 }
 guiClose:
@@ -80,13 +119,19 @@ guiClose:
 Close:
 {
     if (stop = "0") {
-        run, %A_ScriptDir%\processing\tooltip.exe
+        tooltip, The render is not done yet!
+        SetTimer, removetooltip, 5000
         return
     } else {
         exitapp   
     }
 }
 
+removetooltip:
+{
+  tooltip,
+  return
+}
 StdOutStream( sCmd, Callback = "" ) { ; Modified  :  SKAN 31-Aug-2013 http://goo.gl/j8XJXY                             
   Static StrGet := "StrGet"           ; Thanks to :  HotKeyIt         http://goo.gl/IsH1zs                                   
                                       ; Original  :  Sean 20-Feb-2007 http://goo.gl/mxCdn
@@ -145,33 +190,54 @@ StdOutStream( sCmd, Callback = "" ) { ; Modified  :  SKAN 31-Aug-2013 http://goo
 Return Isfunc( Callback ) ? %Callback%( "", 0 ) : sOutput      
 }
 
-StdOutStream_Callback( data, n ) {
-    Static D
+main_Callback( data, n ) {
     Static Defaults
     Static LOG
     Static ETS
     casing := SubStr(data, 1, 4)
     Switch casing
     {
-        case "perc":
-            stuffs := SubStr(data, 5, 16)
-            GuiControl, outputlog:, LOG, %stuffs%
-            return
-        case "estr":
-            stuffs := SubStr(data, 5, 5)
-            GuiControl, outputlog:, ETR, %stuffs%
-            return
-        case "defs":
-            stuffs := SubStr(data, 5)
-            GuiControl, outputlog:, Defaults, %stuffs%
-            return
-        case "stop":
-            global stop = 1
-            return
+      case "perc":
+        stuffs := SubStr(data, 5, 16)
+        GuiControl, outputlog:, LOG, %stuffs%
+        return
+      case "estr":
+        stuffs := SubStr(data, 5, 5)
+        GuiControl, outputlog:, ETR, %stuffs%
+        return
+      case "defs":
+        stuffs := SubStr(data, 5)
+        GuiControl, outputlog:, Defaults, %stuffs%
+        return
+      case "stop":
+        global stop = 1
+        return
   }
-  ;ToolTip % D .= data
 
   if ! ( n ) {
+    Return
+  }
+}
+
+probe_Callback( data, n ) {
+    Static vHeight
+    Static vWidth
+    Caser := SubStr(data, 1, 4)
+    Switch Caser {
+      case "aspw":
+        ree1 := SubStr(data, 5)
+        ree1 := StrReplace(ree1, "`n")
+        ree1 := StrReplace(ree1, A_Space)
+        global aspw := ree1
+        return
+      case "asph":
+        ree2 := SubStr(data, 5)
+        ree2 := StrReplace(ree2, "`n")
+        ree2 := StrReplace(ree2, A_Space)
+        global asph := ree2
+        return
+    }
+    if ! ( n ) {
     Return
   }
 }

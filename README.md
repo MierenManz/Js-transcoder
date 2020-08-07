@@ -24,7 +24,16 @@ Custom transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 - HW Accel is supported, but only on hardware that supports, AMF or NVENC/CUVID
 # Known Bugs
 - NONE! :D
+# Next Updates
+- UI overhaul
+- less clutter
+- user requested features
 # Changelog
+## v1.6.0
+- Added size changing, you can now downscale(or upscale) videos (intel gpu transcoding not supported!)
+- fixed typo's
+- changed ui
+- added a autoscale feature
 ## v1.5.2
 - fixed a Small visual bug in the percentage window when clicking "Close Window" while transcoding is not finished yet 
 ## v1.5.1

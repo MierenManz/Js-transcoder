@@ -2,7 +2,6 @@ var start = Math.floor(new Date().getTime() / 1000);
 const ffmpeg = require('fluent-ffmpeg');
 const fs = require('fs');
 ffmpeg.setFfprobePath(__dirname + "/ffmpeg/ffprobe.exe");
-
 var inputfile = process.argv[2];
 var config = fs.readFileSync(__dirname + '/config.txt', 'utf-8');
 var config = config.toString().split("\r\n");
@@ -11,11 +10,13 @@ var BITRATE = config[1];
 var CBVR = config[2];
 var USE_GPU = config[3];
 var USE_H265 = config[4];
+var vvwidth = config[5];
+var vvheight = config[6];
 ffmpeg.ffprobe(inputfile, (err, metadata) => {
     if (err) throw err;
+    var gpuInputs = []
     var decode = metadata.streams[0].codec_name;
     var CBR = false;
-    var gpuInputs = [];
     var H265gpu = USE_H265 + USE_GPU;
     var vidbitr8 = Math.round((metadata.streams[0].bit_rate / 1000)) + "k";
     if (CBVR == "true") {
@@ -25,7 +26,12 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
     if (BITRATE !== "empty") {
         var vidbitr8 = BITRATE + "k";
         var ifstates = ifstates + "\nCustom bitrate is specified!\nUsing " + vidbitr8 + "bps";
-    } else var ifstates = ifstates + "\nNo bitrate was specified!\nUsing bitrate of original file which is " + vidbitr8 + "bps";
+    } else var ifstates = ifstates + "\nNo bitrate was specified!\nUsing original bitrate of " + vidbitr8 + "bps";
+    var res = vvwidth + vvheight
+    if (res !== "00") {
+        gpuInputs.push(`-resize ${vvwidth}x${vvheight}`);
+    } else {};
+    var ifstates = ifstates + `\nUsing resolution of ${vvwidth}x${vvheight}`;
     switch (H265gpu) {
         case "00":
             var codex = "libx264";
@@ -33,7 +39,7 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
             break;
         case "01":
             if (NVIDIA == "true") {
-                var gpuInputs = ["-vsync 0", "-hwaccel cuvid", "-hwaccel_device 0", `-c:v ${decode}_cuvid`];
+                gpuInputs.push("-vsync 0", "-hwaccel cuda", "-hwaccel_device 0", `-c:v ${decode}_cuvid`, "-hwaccel_output_format cuda");
                 var codex = "h264_nvenc";
             } else {
                 var gpuInputs = ["-vsync 0", "-hwaccel dxva2", "-hwaccel_device 0"];
@@ -47,12 +53,12 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
             break;
         case "11":
             if (NVIDIA == "true") {
-                var gpuInputs = ["-vsync 0", "-hwaccel cuvid", "-hwaccel_device 0", `-c:v ${decode}_cuvid`];
+                gpuInputs.push("-vsync 0", "-hwaccel_device 0", "-hwaccel cuda", `-c:v ${decode}_cuvid`, "-hwaccel_output_format cuda");
                 var codex = "hevc_nvenc";
             } else {
-                var gpuInputs = ["-vsync 0", "-hwaccel dxva2", "-hwaccel_device 0"];
+                gpuInputs.push("-vsync 0", "-hwaccel dxva2", "-hwaccel_device 0");
                 var codex = "hevc_amf";
-            }
+            };
             var ifstates = ifstates + '\nUsing "' + codex + '" as codec' + '\nUsing Hardware Accelerated rendering! With these options:\n"' + gpuInputs + '"';
             break;
     };
@@ -76,15 +82,15 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
             var timeleftformatted = `${timeleftM}:${timeleftSadjusted}`;
             console.log("estr" + timeleftformatted + " left");
             var etrcalc = etrcalc + 1;
-            console.log(`perc${percentage}% Finished `);
+            console.log(`perc${percentage}% Finished`);
         })
         .on('end', function() {
             console.log("defsRender Finished");
             console.log("stop");
             process.exit(0);
         })
-        .on('error', function(err) {
-            console.log("defs" + err.message);
+        .on('error', function(err, stdout, stderr) {
+            console.log("defs" + stderr);
             console.log("stop");
             fs.unlinkSync('./output.mp4');
             process.exit(0);
