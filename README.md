@@ -13,8 +13,7 @@ Custom transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 2. Download the latest stable release
 3. Run main.exe
 # Troubleshooting
-1. If there is any problem, click debug.ahk and select the same file
-2. After a few seconds it should open a small small console with a errorcode.
+1. If there is any problem, copy the error that you got
 3. copy that and make a new [issue](https://github.com/MierenManz/ahktrans/issues/new)
 4. Paste the copied error in the issue and then submit it.
 5. Wait a few days and a new version will be released
