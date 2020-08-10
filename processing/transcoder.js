@@ -28,9 +28,7 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
         var ifstates = ifstates + "\nCustom bitrate is specified!\nUsing " + vidbitr8 + "bps";
     } else var ifstates = ifstates + "\nNo bitrate was specified!\nUsing original bitrate of " + vidbitr8 + "bps";
     var res = vvwidth + vvheight
-    if (res !== "00") {
-        gpuInputs.push(`-resize ${vvwidth}x${vvheight}`);
-    } else {};
+    if (res !== "00") gpuInputs.push(`-resize ${vvwidth}x${vvheight}`);
     var ifstates = ifstates + `\nUsing resolution of ${vvwidth}x${vvheight}`;
     switch (H265gpu) {
         case "00":
@@ -42,7 +40,7 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
                 gpuInputs.push("-vsync 0", "-hwaccel cuda", "-hwaccel_device 0", `-c:v ${decode}_cuvid`, "-hwaccel_output_format cuda");
                 var codex = "h264_nvenc";
             } else {
-                var gpuInputs = ["-vsync 0", "-hwaccel dxva2", "-hwaccel_device 0"];
+                gpuInputs.push("-vsync 0", "-hwaccel dxva2", "-hwaccel_device 0");
                 var codex = "h264_amf";
             }
             var ifstates = ifstates + '\nUsing "' + codex + '" as codec' + '\nUsing Hardware Accelerated rendering! With these options:\n"' + gpuInputs + '"';
@@ -70,7 +68,7 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
         .inputOption(gpuInputs)
         .videoCodec(codex)
         .on('progress', function(progress) {
-            var percentage = Math.round((progress.percent + Number.EPSILON) * 100) / 100;
+            var percentage = Math.round((progress.percent + Number.EPSILON) * 100 / 100);
             if (percentage > 100) percentage = 100;
             var etrcalc = 0;
             var current = Math.floor(new Date().getTime() / 1000);
