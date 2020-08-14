@@ -12,6 +12,7 @@ var USE_GPU = config[3];
 var USE_H265 = config[4];
 var vvwidth = config[5];
 var vvheight = config[6];
+var cpuresize = []
 ffmpeg.ffprobe(inputfile, (err, metadata) => {
     if (err) throw err;
     var gpuInputs = []
@@ -28,14 +29,16 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
         var ifstates = ifstates + "\nCustom bitrate is specified!\nUsing " + vidbitr8 + "bps";
     } else var ifstates = ifstates + "\nNo bitrate was specified!\nUsing original bitrate of " + vidbitr8 + "bps";
     var res = vvwidth + vvheight
-    if (res !== "00") gpuInputs.push(`-resize ${vvwidth}x${vvheight}`);
-    var ifstates = ifstates + `\nUsing resolution of ${vvwidth}x${vvheight}`;
+    //if (res !== "00") gpuInputs.push(`-resize ${vvwidth}x${vvheight}`);
     switch (H265gpu) {
         case "00":
             var codex = "libx264";
+            if (res !== "00") cpuresize.push(`-vf scale=${vvwidth}:${vvheight}`);
+            var ifstates = ifstates + `\nUsing resolution of ${vvwidth}x${vvheight}`;
             var ifstates = ifstates + '\nUsing "' + codex + '" as codec' + "\nUsing cpu rendering!";
             break;
         case "01":
+            if (res !== "00") gpuInputs.push(`-resize ${vvwidth}x${vvheight}`);
             if (NVIDIA == "true") {
                 gpuInputs.push("-vsync 0", "-hwaccel cuda", "-hwaccel_device 0", `-c:v ${decode}_cuvid`, "-hwaccel_output_format cuda");
                 var codex = "h264_nvenc";
@@ -43,13 +46,17 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
                 gpuInputs.push("-vsync 0", "-hwaccel dxva2", "-hwaccel_device 0");
                 var codex = "h264_amf";
             }
+            var ifstates = ifstates + `\nUsing resolution of ${vvwidth}x${vvheight}`;
             var ifstates = ifstates + '\nUsing "' + codex + '" as codec' + '\nUsing Hardware Accelerated rendering! With these options:\n"' + gpuInputs + '"';
             break;
         case "10":
             var codex = "libx265";
+            if (res !== "00") cpuresize.push(`-vf scale=${vvwidth}:${vvheight}`);
+            var ifstates = ifstates + `\nUsing resolution of ${vvwidth}x${vvheight}`;
             var ifstates = ifstates + '\nUsing "' + codex + '" as codec' + "\nUsing cpu rendering!";
             break;
         case "11":
+            if (res !== "00") gpuInputs.push(`-resize ${vvwidth}x${vvheight}`);
             if (NVIDIA == "true") {
                 gpuInputs.push("-vsync 0", "-hwaccel_device 0", "-hwaccel cuda", `-c:v ${decode}_cuvid`, "-hwaccel_output_format cuda");
                 var codex = "hevc_nvenc";
@@ -57,6 +64,7 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
                 gpuInputs.push("-vsync 0", "-hwaccel dxva2", "-hwaccel_device 0");
                 var codex = "hevc_amf";
             };
+            var ifstates = ifstates + `\nUsing resolution of ${vvwidth}x${vvheight}`;
             var ifstates = ifstates + '\nUsing "' + codex + '" as codec' + '\nUsing Hardware Accelerated rendering! With these options:\n"' + gpuInputs + '"';
             break;
     };
@@ -66,6 +74,7 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
         .input(inputfile)
         .videoBitrate(vidbitr8, CBR)
         .inputOption(gpuInputs)
+        .outputOption(cpuresize)
         .videoCodec(codex)
         .on('progress', function(progress) {
             var percentage = Math.round((progress.percent + Number.EPSILON) * 100 / 100);

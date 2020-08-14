@@ -9,7 +9,6 @@ aspw := 16
 asph := 9
 reswidth := 1920
 resheight := 1080
-transcoder := A_ScriptDir . "\processing\transcoder.exe"
 config := A_ScriptDir . "\processing\config.txt"
 if !FileExist(config)
 {
@@ -18,7 +17,6 @@ if !FileExist(config)
     FileDelete, %config%
 }
 
-; Start the gui making for a small control panel
 gui, main:New
 gui, main:Add, Button, gFileselect vFilesel x2 y2 w80 h25, Select File
 gui, main:Add, CheckBox, x2 y32 vCvbr,Use Constant Bitrate
@@ -33,105 +31,148 @@ Gui, main:Add, UpDown, gsizecontrol1 vvWidth 0x80 Range0-2147483647
 Gui, main:Add, Text, +center x167 y53, Height
 Gui, main:Add, Edit, +center gsizecontrol x200 y50 w80 h20 Number
 Gui, main:Add, UpDown, gsizecontrol vvHeight 0x80 Range0-2147483647
-Gui, main:Add, Button, gSubmit x105 y100 w80 h30, Start conversion
+Gui, main:Add, Button, gSubmit x195 y80 w80 h30, Start Conversion
+Gui, main:Add, Button, gUsePreset x15 y80 w80 h30, Use Preset
+Gui, main:Add, Button, gSavePreset x105 y80 w80 h30, Save Preset
 gui, main:Show,, AHK-Trans
 return
 
+UsePreset:
+{
+  FileSelectFile, presetfile,, %A_ScriptDir%\presets,, *.preset
+  IniRead, height, %presetfile%, preset, videoheight
+  IniRead, width, %presetfile%, preset, videowidth
+  IniRead, kbrate, %presetfile%, preset, bitrate
+  IniRead, convar, %presetfile%, preset, constorvar
+  IniRead, gpurender, %presetfile%, preset, use_gpu
+  IniRead, H265codec, %presetfile%, preset, use_h265
+  GuiControl, main:, vHeight, %height%
+  GuiControl, main:, vWidth, %width%
+  GuiControl, main:, KBPS, %kbrate%
+  GuiControl, main:, Cvbr, %convar%
+  GuiControl, main:, Gpu, %gpurender%
+  GuiControl, main:, H265, %H265codec%
+  return
+}
+SavePreset:
+{
+  gui, main:Submit, nohide
+  InputBox, userinput, Create preset, What do you want to name the preset?
+  if Instr(FileExist(A_ScriptDir "\presets\" userinput ".preset"), "A") {
+    MsgBox, 4,, This file already exists. Do you want to overwrite it?
+    IfMsgBox, yes
+      {
+      FileAppend,, %A_ScriptDir%\presets\%userinput%.preset
+      IniWrite, %vHeight%, %A_ScriptDir%\presets\%userinput%.preset, preset, videoheight
+      IniWrite, %vWidth%, %A_ScriptDir%\presets\%userinput%.preset, preset, videowidth
+      IniWrite, %KBPS%, %A_ScriptDir%\presets\%userinput%.preset, preset, bitrate
+      IniWrite, %Cvbr%, %A_ScriptDir%\presets\%userinput%.preset, preset, constorvar
+      IniWrite, %Gpu%, %A_ScriptDir%\presets\%userinput%.preset, preset, use_gpu
+      IniWrite, %H265%, %A_ScriptDir%\presets\%userinput%.preset, preset, use_h265
+      msgbox, %useinput%.preset has been overwritten! Click ok to reutnr to the main menu
+      return
+    } else {
+      msgbox, No files were overwritten! Click ok to return to the main menu
+      return
+    }
+  } else {
+    FileAppend,, %A_ScriptDir%\presets\%userinput%.preset
+    IniWrite, %vHeight%, %A_ScriptDir%\presets\%userinput%.preset, preset, videoheight
+    IniWrite, %vWidth%, %A_ScriptDir%\presets\%userinput%.preset, preset, videowidth
+    IniWrite, %KBPS%, %A_ScriptDir%\presets\%userinput%.preset, preset, bitrate
+    IniWrite, %Cvbr%, %A_ScriptDir%\presets\%userinput%.preset, preset, constorvar
+    IniWrite, %Gpu%, %A_ScriptDir%\presets\%userinput%.preset, preset, use_gpu
+    IniWrite, %H265%, %A_ScriptDir%\presets\%userinput%.preset, preset, use_h265
+    return
+  }
+}
 Fileselect:
 {   
-    FileSelectFile, inpFile, 2
-    GuiControl,, Filesel, File Selected!
+  FileSelectFile, inpFile, 2
+    if !inpFile {
+    msgbox, hey, you forgot to give me something to transcode
+    return
+  } else {
+    GuiControl, main:, Filesel, File Selected!
     Inptfile = "%inpFile%"
     StdOutStream( "node.exe " A_ScriptDir "\processing\probe.js " Inptfile, "probe_Callback")
     return
+  }
 }
 
 
 sizecontrol1:
 {
-    gui, Submit, nohide
-    aspw := Trim(aspw)
-    asph := Trim(asph)
-    height := vWidth / aspw * asph
-    GuiControl, main:, vHeight, %height%
-    return
+  gui, main:Submit, nohide
+  aspw := Trim(aspw)
+  asph := Trim(asph)
+  height := vWidth / aspw * asph
+  GuiControl, main:, vHeight, %height%
+  return
 }
 
 sizecontrol:
 {
-    gui, Submit, nohide
-    width := vHeight / asph * aspw
-    GuiControl, main:, vWidth, %width%
-    return
+  gui, main:Submit, nohide
+  width := vHeight / asph * aspw
+  GuiControl, main:, vWidth, %width%
+  return
 }
 Submit:
 {
-    if !inpFile {
-        msgbox, hey, you forgot to give me something to transcode :3
-        return
-    }
-    runwait, %Comspec% /c wmic path win32_VideoController > .\processing\gpu.txt,, hide
-    FileRead, gpu, %A_ScriptDir%\processing\gpu.txt
-    FileDelete, %A_ScriptDir%\processing\gpu.txt
-    If InStr(gpu, "GeForce") {
-        FileAppend, true`n, %config%
-    } else {
-        FileAppend, false`n, %config%
-    }
-    Gui, Submit
-    if (KBPS = "0") {
-        FileAppend, empty`n, %config%
-    } else {
-        FileAppend, %KBPS%`n, %config%
-    }
-    if (Cvbr = 1) {
-        FileAppend, true`n, %config%
-    } else {
-        FileAppend, false`n, %config%
-    }
-    FileAppend, %Gpu%`n, %config%
-    FileAppend, %H265%`n, %config%
-    if (vWidth = 0) {
-      FileAppend, %reswidth%`n, %config%
-    } else {
-      FileAppend, %vWidth%`n, %config%
-    }
-    if (vHeight = 0) {
-      FileAppend, %resheight%`n, %config%
-    } else {
-      FileAppend, %vHeight%`n, %config%
-    }
-    gui, Destroy
-    gui, outputlog:New, -0xC00000
-    gui, outputlog:Add, Button, gClose x87 y5 w175 h25, Close window
-    gui, outputlog:Add, Edit, r7 vDefaults +center ReadOnly x0 y35 w350
-    gui, outputlog:Add, Edit, r1 vLOG +center ReadOnly x75 y135 w100
-    gui, outputlog:Add, Edit, r1 vETR +center ReadOnly x176 y135 w100
-    gui, outputlog:Show, w350 h235,getstuff
-    start := A_TickCount
-    StdOutStream( "node.exe " A_ScriptDir "\processing\transcoder.js " Inptfile, "main_Callback")
+  if !inpFile {
+    msgbox, hey, you forgot to give me something to transcode :3
     return
-}
-guiClose:
-{
-    exitapp
-}
-Close:
-{
-    if (stop = "0") {
-        tooltip, The render is not done yet!
-        SetTimer, removetooltip, 5000
-        return
-    } else {
-        exitapp   
-    }
-}
-
-removetooltip:
-{
-  tooltip,
+  }
+  runwait, %Comspec% /c wmic path win32_VideoController > .\processing\gpu.txt,, hide
+  FileRead, gpu, %A_ScriptDir%\processing\gpu.txt
+  FileDelete, %A_ScriptDir%\processing\gpu.txt
+  If InStr(gpu, "GeForce") {
+    FileAppend, true`n, %config%
+  } else {
+    FileAppend, false`n, %config%
+  }
+  Gui, main:Submit
+  if (KBPS = "0") {
+    FileAppend, empty`n, %config%
+  } else {
+    FileAppend, %KBPS%`n, %config%
+  }
+  if (Cvbr = 1) {
+    FileAppend, true`n, %config%
+  } else {
+    FileAppend, false`n, %config%
+  }
+  FileAppend, %Gpu%`n, %config%
+  FileAppend, %H265%`n, %config%
+  if (vWidth = 0) {
+    FileAppend, %reswidth%`n, %config%
+  } else {
+    FileAppend, %vWidth%`n, %config%
+  }
+  if (vHeight = 0) {
+    FileAppend, %resheight%`n, %config%
+  } else {
+    FileAppend, %vHeight%`n, %config%
+  }
+  gui, main:Destroy
+  gui, outputlog:New, -0xC00000
+  gui, outputlog:Add, Button, gClose x87 y5 w175 h25, Close window
+  gui, outputlog:Add, Edit, r7 vDefaults +center ReadOnly x0 y35 w350
+  gui, outputlog:Add, Edit, r1 vLOG +center ReadOnly x75 y135 w100
+  gui, outputlog:Add, Edit, r1 vETR +center ReadOnly x176 y135 w100
+  gui, outputlog:Show, w350 h235,getstuff
+  start := A_TickCount
+  StdOutStream( "node.exe " A_ScriptDir "\processing\transcoder.js " Inptfile, "main_Callback")
   return
 }
+
+mainguiClose:
+Close:
+{
+  exitapp
+}
+
 StdOutStream( sCmd, Callback = "" ) { ; Modified  :  SKAN 31-Aug-2013 http://goo.gl/j8XJXY                             
   Static StrGet := "StrGet"           ; Thanks to :  HotKeyIt         http://goo.gl/IsH1zs                                   
                                       ; Original  :  Sean 20-Feb-2007 http://goo.gl/mxCdn
@@ -191,28 +232,28 @@ Return Isfunc( Callback ) ? %Callback%( "", 0 ) : sOutput
 }
 
 main_Callback( data, n ) {
-    Static Defaults
-    Static LOG
-    Static ETS
-    casing := SubStr(data, 1, 4)
-    Switch casing
-    {
-      case "perc":
-        stuffs := SubStr(data, 5, 16)
-        GuiControl, outputlog:, LOG, %stuffs%
-        return
-      case "estr":
-        stuffs := SubStr(data, 5, 5)
-        GuiControl, outputlog:, ETR, %stuffs%
-        return
-      case "defs":
-        stuffs := SubStr(data, 5)
-        GuiControl, outputlog:, Defaults, %stuffs%
-        return
-      case "stop":
-        global stop = 1
-        return
-  }
+  Static Defaults
+  Static LOG
+  Static ETS
+  casing := SubStr(data, 1, 4)
+  Switch casing
+  {
+    case "perc":
+      stuffs := SubStr(data, 5, 16)
+      GuiControl, outputlog:, LOG, %stuffs%
+      return
+    case "estr":
+      stuffs := SubStr(data, 5, 5)
+      GuiControl, outputlog:, ETR, %stuffs%
+      return
+    case "defs":
+      stuffs := SubStr(data, 5)
+      GuiControl, outputlog:, Defaults, %stuffs%
+      return
+    case "stop":
+      global stop = 1
+      return
+}
 
   if ! ( n ) {
     Return
@@ -220,24 +261,24 @@ main_Callback( data, n ) {
 }
 
 probe_Callback( data, n ) {
-    Static vHeight
-    Static vWidth
-    Caser := SubStr(data, 1, 4)
-    Switch Caser {
-      case "aspw":
-        ree1 := SubStr(data, 5)
-        ree1 := StrReplace(ree1, "`n")
-        ree1 := StrReplace(ree1, A_Space)
-        global aspw := ree1
-        return
-      case "asph":
-        ree2 := SubStr(data, 5)
-        ree2 := StrReplace(ree2, "`n")
-        ree2 := StrReplace(ree2, A_Space)
-        global asph := ree2
-        return
-    }
-    if ! ( n ) {
+  Static vHeight
+  Static vWidth
+  Caser := SubStr(data, 1, 4)
+  Switch Caser {
+    case "aspw":
+      ree1 := SubStr(data, 5)
+      ree1 := StrReplace(ree1, "`n")
+      ree1 := StrReplace(ree1, A_Space)
+      global aspw := ree1
+      return
+    case "asph":
+      ree2 := SubStr(data, 5)
+      ree2 := StrReplace(ree2, "`n")
+      ree2 := StrReplace(ree2, A_Space)
+      global asph := ree2
+      return
+  }
+  if ! ( n ) {
     Return
   }
 }

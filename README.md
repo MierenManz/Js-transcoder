@@ -14,7 +14,7 @@ Custom transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 3. Run main.exe
 # Troubleshooting
 1. If there is any problem, copy the error that you got
-3. copy that and make a new [issue](https://github.com/MierenManz/ahktrans/issues/new)
+3. copy that and make a new [issue](https://github.com/MierenManz/transcoder/issues/new)
 4. Paste the copied error in the issue and then submit it.
 5. Wait a few days and a new version will be released
 
@@ -25,20 +25,31 @@ Custom transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 - NONE! :D
 # Next Updates
 - UI overhaul
-- less clutter
-- user requested features
+- Less clutter
+- User requested features
+- Adding Intel HW Accel support
 # Changelog
+## v1.6.1
+- Added presets, You can now make and use presets.
+- Changed the close window in the rendering GUI. It will no longer let you wait for it to finish, it will stop the render and delete the file.
+- Updated ffmpeg and ffprobe for the latest features.
+- Fixed the program not exiting when the gui is destroyed.
+- Fixed a bug where you could not scale the output of the video if you used cpu rendering.
+
 ## v1.6.0
 - Added size changing, you can now downscale(or upscale) videos (intel gpu transcoding not supported!)
-- fixed typo's
-- changed ui
-- added a autoscale feature
+- Fixed typo's
+- Changed ui
+- Added a autoscale feature
+
 ## v1.5.2
-- fixed a Small visual bug in the percentage window when clicking "Close Window" while transcoding is not finished yet 
+- Fixed a Small visual bug in the percentage window when clicking "Close Window" while transcoding is not finished yet 
+
 ## v1.5.1
 - Removed unused files
 - Fixed a bug where you could not select files where the filename had a space in it
 - Added check for input file(so that ffmpeg does not error out)
+
 ## v1.5.0
 - Rewrote communication code(yes, again) That will most likely fix issues that were there in v1.2.0 - v1.4.0
 - Removed dependency on [ini](https://www.npmjs.com/package/ini) and made my own config parser
