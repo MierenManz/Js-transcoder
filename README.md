@@ -21,8 +21,11 @@ Custom transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 # Notes
 - Currently you need to download both [node.js](https://nodejs.org/en/) and [Autohotkey](https://www.autohotkey.com/) for running the sourcecode!
 - HW Accel is supported, but only on hardware that supports, AMF or NVENC/CUVID
+
 # Known Bugs
-- NONE! :D
+- If click on "use preset" but don't select a file it will error out. Will be fixed in v1.7.0
+- If you use "save preset" it will always overwrite. Will be fixed in v1.7.0
+
 # Next Updates
 - UI overhaul
 - Less clutter
