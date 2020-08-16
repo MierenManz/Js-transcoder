@@ -34,6 +34,9 @@ Custom transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 - User requested features
 
 # Changelog
+## v1.7.1
+- Removed annoying message boxes
+
 ## v1.7.0
 - Added auto updates, When a new version is available it will give you a window that asks if you want to update or not
 - Added a small tooltip at the cursor when the render is finished.

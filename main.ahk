@@ -63,7 +63,6 @@ UsePreset:
           goto, UsePreset
           return
         } else {
-          MsgBox, You canceled the action, Going back to the main menu!
           return
         }
     } else {
@@ -88,7 +87,6 @@ SavePreset:
   InputBox, userinput, Create preset, What do you want to name the preset?
   if ErrorLevel
     {
-      MsgBox, You canceled the action! Click ok to return to the main menu
       return
     }
   if Instr(FileExist(A_ScriptDir "\presets\" userinput ".preset"), "A") {
