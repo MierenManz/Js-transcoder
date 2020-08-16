@@ -27,7 +27,7 @@ Custom transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 - HW Accel is supported, but only on hardware that supports, AMF or NVENC/CUVID (I WILL NOT ADD QUICKSYNCVIDEO ENCODING OR DECODING)
 
 # Known Bugs
-- NONE! :D
+- The program will try to download the latest version even if there is no internet connectivity. Will be fixed in v1.7.1
 
 # Next Updates
 - Less clutter
