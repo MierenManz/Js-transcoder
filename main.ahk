@@ -19,8 +19,8 @@ onlinever := StrSplit(onlinever, ".")
 mainveronline := onlinever[1]
 updateveronline := onlinever[2]
 patchveronline := onlinever[3]
-if (onlinecheck > localver) {
-  msgbox, 4,, there is an update! Do you want to update?
+if (localver !=< onlinecheck) {
+    msgbox, 4,, there is an update! Do you want to update?
   IfMsgBox, Yes
   {
     run, %A_ScriptDir%\updates\updater.exe %mainveronline% %updateveronline% %patchveronline%
