@@ -3,31 +3,28 @@ SendMode Input
 SetWorkingDir %A_ScriptDir%
 #SingleInstance, force
 Menu, Tray, Icon , %A_ScriptDir%\processing\icon.ico, 1, 1
-localver := 170
+localver = v1.7.0
+localver := trim(localver)
 stop := 0
 aspw := 16
 asph := 9
 reswidth := 1920
 resheight := 1080
 whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
-whr.Open("GET", "https://raw.githubusercontent.com/MierenManz/transcoderversion/master/README.md", true)
+whr.Open("GET", "https://raw.githubusercontent.com/MierenManz/versiontest/master/README.md", true)
 whr.Send()
 whr.WaitForResponse()
-onlinever := whr.ResponseText
-onlinecheck := StrReplace(onlinever, ".", "")
-onlinever := StrSplit(onlinever, ".")
-mainveronline := onlinever[1]
-updateveronline := onlinever[2]
-patchveronline := onlinever[3]
-if (localver !=< onlinecheck) {
-    msgbox, 4,, there is an update! Do you want to update?
-  IfMsgBox, Yes
+onlinecheck := whr.ResponseText
+onlinecheck := StrReplace(StrReplace(onlinecheck, "`n"), "`r")
+msgbox %onlinecheck%
+  if (localver !== onlinecheck)
   {
-    run, %A_ScriptDir%\updates\updater.exe %mainveronline% %updateveronline% %patchveronline%
+    msgbox, 4,, there is an update! Do you want to update?
+    IfMsgBox, Yes
+    {
+    run, %A_ScriptDir%\updates\updater.exe %onlinecheck%
     exitapp
   }
-} else {
-  msgbox, no new version
 }
 config := A_ScriptDir . "\processing\config.txt"
 if !FileExist(config)
