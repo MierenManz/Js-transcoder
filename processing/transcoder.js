@@ -12,24 +12,21 @@ var USE_GPU = config[3];
 var USE_H265 = config[4];
 var vvwidth = config[5];
 var vvheight = config[6];
-var cpuresize = []
+var cpuresize = [];
+var gpuInputs = [];
+var H265gpu = USE_H265 + USE_GPU;
 ffmpeg.ffprobe(inputfile, (err, metadata) => {
     if (err) throw err;
-    var gpuInputs = []
     var decode = metadata.streams[0].codec_name;
-    var CBR = false;
-    var H265gpu = USE_H265 + USE_GPU;
     var vidbitr8 = Math.round((metadata.streams[0].bit_rate / 1000)) + "k";
     if (CBVR == "true") {
-        var CBR = CBVR;
         var ifstates = "Constant BitRate (CBR) is enabled!";
     } else var ifstates = "Variable BitRate (VBR) is enabled!";
     if (BITRATE !== "empty") {
         var vidbitr8 = BITRATE + "k";
         var ifstates = ifstates + "\nCustom bitrate is specified!\nUsing " + vidbitr8 + "bps";
     } else var ifstates = ifstates + "\nNo bitrate was specified!\nUsing original bitrate of " + vidbitr8 + "bps";
-    var res = vvwidth + vvheight
-    //if (res !== "00") gpuInputs.push(`-resize ${vvwidth}x${vvheight}`);
+    var res = vvwidth + vvheight;
     switch (H265gpu) {
         case "00":
             var codex = "libx264";
@@ -72,7 +69,7 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
     var proc = ffmpeg();
     proc.setFfmpegPath(__dirname + "/ffmpeg/ffmpeg.exe")
         .input(inputfile)
-        .videoBitrate(vidbitr8, CBR)
+        .videoBitrate(vidbitr8, CBVR)
         .inputOption(gpuInputs)
         .outputOption(cpuresize)
         .videoCodec(codex)

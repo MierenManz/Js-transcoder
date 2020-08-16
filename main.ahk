@@ -1,14 +1,34 @@
-#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
-SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
-SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
+#NoEnv
+SendMode Input
+SetWorkingDir %A_ScriptDir%
 #SingleInstance, force
 Menu, Tray, Icon , %A_ScriptDir%\processing\icon.ico, 1, 1
-; Set everything in the settings back to normal
+localver := 170
 stop := 0
 aspw := 16
 asph := 9
 reswidth := 1920
 resheight := 1080
+whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+whr.Open("GET", "https://raw.githubusercontent.com/MierenManz/transcoderversion/master/README.md", true)
+whr.Send()
+whr.WaitForResponse()
+onlinever := whr.ResponseText
+onlinecheck := StrReplace(onlinever, ".", "")
+onlinever := StrSplit(onlinever, ".")
+mainveronline := onlinever[1]
+updateveronline := onlinever[2]
+patchveronline := onlinever[3]
+if (onlinecheck > localver) {
+  msgbox, 4,, there is an update! Do you want to update?
+  IfMsgBox, Yes
+  {
+    run, %A_ScriptDir%\updates\updater.exe %mainveronline% %updateveronline% %patchveronline%
+    exitapp
+  }
+} else {
+  msgbox, no new version
+}
 config := A_ScriptDir . "\processing\config.txt"
 if !FileExist(config)
 {
@@ -34,57 +54,73 @@ Gui, main:Add, UpDown, gsizecontrol vvHeight 0x80 Range0-2147483647
 Gui, main:Add, Button, gSubmit x195 y80 w80 h30, Start Conversion
 Gui, main:Add, Button, gUsePreset x15 y80 w80 h30, Use Preset
 Gui, main:Add, Button, gSavePreset x105 y80 w80 h30, Save Preset
-gui, main:Show,, AHK-Trans
+gui, main:Show,, Transcoder
 return
 
 UsePreset:
 {
-  FileSelectFile, presetfile,, %A_ScriptDir%\presets,, *.preset
-  IniRead, height, %presetfile%, preset, videoheight
-  IniRead, width, %presetfile%, preset, videowidth
-  IniRead, kbrate, %presetfile%, preset, bitrate
-  IniRead, convar, %presetfile%, preset, constorvar
-  IniRead, gpurender, %presetfile%, preset, use_gpu
-  IniRead, H265codec, %presetfile%, preset, use_h265
-  GuiControl, main:, vHeight, %height%
-  GuiControl, main:, vWidth, %width%
-  GuiControl, main:, KBPS, %kbrate%
-  GuiControl, main:, Cvbr, %convar%
-  GuiControl, main:, Gpu, %gpurender%
-  GuiControl, main:, H265, %H265codec%
-  return
+  FileSelectFile, presetFile,, %A_ScriptDir%\presets,, *.preset
+    if !presetFile {
+      msgbox, 4,, You forgot to select a file `n Want to Select a new one?
+      IfMsgBox, Yes
+        {
+          goto, UsePreset
+          return
+        } else {
+          MsgBox, You canceled the action, Going back to the main menu!
+          return
+        }
+    } else {
+    IniRead, height, %presetfile%, preset, videoheight
+    IniRead, width, %presetfile%, preset, videowidth
+    IniRead, kbrate, %presetfile%, preset, bitrate
+    IniRead, convar, %presetfile%, preset, constorvar
+    IniRead, gpurender, %presetfile%, preset, use_gpu
+    IniRead, H265codec, %presetfile%, preset, use_h265
+    GuiControl, main:, vHeight, %height%
+    GuiControl, main:, vWidth, %width%
+    GuiControl, main:, KBPS, %kbrate%
+    GuiControl, main:, Cvbr, %convar%
+    GuiControl, main:, Gpu, %gpurender%
+    GuiControl, main:, H265, %H265codec%
+    return
+  }
 }
 SavePreset:
 {
   gui, main:Submit, nohide
   InputBox, userinput, Create preset, What do you want to name the preset?
+  if ErrorLevel
+    {
+      MsgBox, You canceled the action! Click ok to return to the main menu
+      return
+    }
   if Instr(FileExist(A_ScriptDir "\presets\" userinput ".preset"), "A") {
     MsgBox, 4,, This file already exists. Do you want to overwrite it?
     IfMsgBox, yes
       {
-      FileAppend,, %A_ScriptDir%\presets\%userinput%.preset
-      IniWrite, %vHeight%, %A_ScriptDir%\presets\%userinput%.preset, preset, videoheight
-      IniWrite, %vWidth%, %A_ScriptDir%\presets\%userinput%.preset, preset, videowidth
-      IniWrite, %KBPS%, %A_ScriptDir%\presets\%userinput%.preset, preset, bitrate
-      IniWrite, %Cvbr%, %A_ScriptDir%\presets\%userinput%.preset, preset, constorvar
-      IniWrite, %Gpu%, %A_ScriptDir%\presets\%userinput%.preset, preset, use_gpu
-      IniWrite, %H265%, %A_ScriptDir%\presets\%userinput%.preset, preset, use_h265
-      msgbox, %useinput%.preset has been overwritten! Click ok to reutnr to the main menu
+      goto, WritePreset
+      msgbox, %useinput%.preset has been overwritten! Click ok to return to the main menu
       return
     } else {
       msgbox, No files were overwritten! Click ok to return to the main menu
       return
     }
   } else {
-    FileAppend,, %A_ScriptDir%\presets\%userinput%.preset
-    IniWrite, %vHeight%, %A_ScriptDir%\presets\%userinput%.preset, preset, videoheight
-    IniWrite, %vWidth%, %A_ScriptDir%\presets\%userinput%.preset, preset, videowidth
-    IniWrite, %KBPS%, %A_ScriptDir%\presets\%userinput%.preset, preset, bitrate
-    IniWrite, %Cvbr%, %A_ScriptDir%\presets\%userinput%.preset, preset, constorvar
-    IniWrite, %Gpu%, %A_ScriptDir%\presets\%userinput%.preset, preset, use_gpu
-    IniWrite, %H265%, %A_ScriptDir%\presets\%userinput%.preset, preset, use_h265
+    goto, WritePreset
     return
   }
+}
+WritePreset:
+{
+  FileAppend,, %A_ScriptDir%\presets\%userinput%.preset
+  IniWrite, %vHeight%, %A_ScriptDir%\presets\%userinput%.preset, preset, videoheight
+  IniWrite, %vWidth%, %A_ScriptDir%\presets\%userinput%.preset, preset, videowidth
+  IniWrite, %KBPS%, %A_ScriptDir%\presets\%userinput%.preset, preset, bitrate
+  IniWrite, %Cvbr%, %A_ScriptDir%\presets\%userinput%.preset, preset, constorvar
+  IniWrite, %Gpu%, %A_ScriptDir%\presets\%userinput%.preset, preset, use_gpu
+  IniWrite, %H265%, %A_ScriptDir%\presets\%userinput%.preset, preset, use_h265
+  return
 }
 Fileselect:
 {   
@@ -156,14 +192,19 @@ Submit:
     FileAppend, %vHeight%`n, %config%
   }
   gui, main:Destroy
-  gui, outputlog:New, -0xC00000
+  gui, outputlog:New,
   gui, outputlog:Add, Button, gClose x87 y5 w175 h25, Close window
   gui, outputlog:Add, Edit, r7 vDefaults +center ReadOnly x0 y35 w350
   gui, outputlog:Add, Edit, r1 vLOG +center ReadOnly x75 y135 w100
   gui, outputlog:Add, Edit, r1 vETR +center ReadOnly x176 y135 w100
-  gui, outputlog:Show, w350 h235,getstuff
+  gui, outputlog:Show, w350 h235, Transcoder
   start := A_TickCount
   StdOutStream( "node.exe " A_ScriptDir "\processing\transcoder.js " Inptfile, "main_Callback")
+  return
+}
+removetooltip:
+{
+  tooltip,
   return
 }
 
@@ -173,29 +214,28 @@ Close:
   exitapp
 }
 
-StdOutStream( sCmd, Callback = "" ) { ; Modified  :  SKAN 31-Aug-2013 http://goo.gl/j8XJXY                             
-  Static StrGet := "StrGet"           ; Thanks to :  HotKeyIt         http://goo.gl/IsH1zs                                   
-                                      ; Original  :  Sean 20-Feb-2007 http://goo.gl/mxCdn
+StdOutStream( sCmd, Callback = "" ) {
+  Static StrGet := "StrGet"
                                     
   DllCall( "CreatePipe", UIntP,hPipeRead, UIntP,hPipeWrite, UInt,0, UInt,0 )
   DllCall( "SetHandleInformation", UInt,hPipeWrite, UInt,1, UInt,1 )
 
   if(a_ptrSize=8){
-    VarSetCapacity( STARTUPINFO, 104, 0  )      ; STARTUPINFO          ;  http://goo.gl/fZf24
-    NumPut( 68,         STARTUPINFO,  0 )      ; cbSize
-    NumPut( 0x100,      STARTUPINFO, 60 )      ; dwFlags    =>  STARTF_USESTDHANDLES = 0x100 
-    NumPut( hPipeWrite, STARTUPINFO, 88 )      ; hStdOutput
-    NumPut( hPipeWrite, STARTUPINFO, 96 )      ; hStdError
-    VarSetCapacity( PROCESS_INFORMATION, 32 )  ; PROCESS_INFORMATION  ;  http://goo.gl/b9BaI      
+    VarSetCapacity( STARTUPINFO, 104, 0  )
+    NumPut( 68,         STARTUPINFO,  0 )
+    NumPut( 0x100,      STARTUPINFO, 60 )
+    NumPut( hPipeWrite, STARTUPINFO, 88 )
+    NumPut( hPipeWrite, STARTUPINFO, 96 )
+    VarSetCapacity( PROCESS_INFORMATION, 32 )
   }else{
-    VarSetCapacity( STARTUPINFO, 68, 0  )      ; STARTUPINFO          ;  http://goo.gl/fZf24
-    NumPut( 68,         STARTUPINFO,  0 )      ; cbSize
-    NumPut( 0x100,      STARTUPINFO, 44 )      ; dwFlags    =>  STARTF_USESTDHANDLES = 0x100 
-    NumPut( hPipeWrite, STARTUPINFO, 60 )      ; hStdOutput
-    NumPut( hPipeWrite, STARTUPINFO, 64 )      ; hStdError
-    VarSetCapacity( PROCESS_INFORMATION, 16 )  ; PROCESS_INFORMATION  ;  http://goo.gl/b9BaI     
+    VarSetCapacity( STARTUPINFO, 68, 0  )
+    NumPut( 68,         STARTUPINFO,  0 )
+    NumPut( 0x100,      STARTUPINFO, 44 )
+    NumPut( hPipeWrite, STARTUPINFO, 60 )
+    NumPut( hPipeWrite, STARTUPINFO, 64 )
+    VarSetCapacity( PROCESS_INFORMATION, 16 )
   }
-  If ! DllCall( "CreateProcess", UInt,0, UInt,&sCmd, UInt,0, UInt,0 ;  http://goo.gl/USC5a
+  If ! DllCall( "CreateProcess", UInt,0, UInt,&sCmd, UInt,0, UInt,0
               , UInt,1, UInt,0x08000000, UInt,0, UInt,0
               , UInt,&STARTUPINFO, UInt,&PROCESS_INFORMATION ) 
    Return "" 
@@ -210,7 +250,7 @@ StdOutStream( sCmd, Callback = "" ) { ; Modified  :  SKAN 31-Aug-2013 http://goo
     hThread  := NumGet( PROCESS_INFORMATION, 4 )                      
   DllCall( "CloseHandle", UInt,hPipeWrite )
 
-  AIC := ( SubStr( A_AhkVersion, 1, 3 ) = "1.0" )                   ;  A_IsClassic 
+  AIC := ( SubStr( A_AhkVersion, 1, 3 ) = "1.0" )
   VarSetCapacity( Buffer, 4096, 0 ), nSz := 0 
   
   While DllCall( "ReadFile", UInt,hPipeRead, UInt,&Buffer, UInt,4094, UIntP,nSz, Int,0 ) {
@@ -251,6 +291,8 @@ main_Callback( data, n ) {
       GuiControl, outputlog:, Defaults, %stuffs%
       return
     case "stop":
+      tooltip, Render Finished
+      SetTimer, removetooltip, 5000
       global stop = 1
       return
 }
