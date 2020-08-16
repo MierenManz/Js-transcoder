@@ -1,11 +1,13 @@
 # Transcoder
 Custom transcoder based of [FFMPEG](https://ffmpeg.org/) written in
-[node.js](https://nodejs.org/en/)(Back-End) and [Autohotkey](https://www.autohotkey.com/)(Front-End)
+[node.js](https://nodejs.org/en/)(Back-End) and [AutoHotkey](https://www.autohotkey.com/)(Front-End)
+
+![screenshot](2020-08-15_204233.png)
 
 # Installation
 ## Installing
 ### Downloaded sourcecode
-1. Download [node.js](https://nodejs.org/en/) and [Autohotkey](https://www.autohotkey.com/)
+1. Download [node.js](https://nodejs.org/en/) and [AutoHotkey](https://www.autohotkey.com/)
 2. Click download this github repo
 3. Run main.ahk
 
@@ -21,7 +23,7 @@ Custom transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 5. Wait a few days and a new version will be released
 
 # Notes
-- Currently you need to download both [node.js](https://nodejs.org/en/) and [Autohotkey](https://www.autohotkey.com/) for running the sourcecode!
+- Currently you need to download both [node.js](https://nodejs.org/en/) and [AutoHotkey](https://www.autohotkey.com/) for running the sourcecode!
 - HW Accel is supported, but only on hardware that supports, AMF or NVENC/CUVID (I WILL NOT ADD QUICKSYNCVIDEO ENCODING OR DECODING)
 
 # Known Bugs
