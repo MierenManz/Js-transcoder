@@ -16,7 +16,6 @@ whr.Send()
 whr.WaitForResponse()
 onlinecheck := whr.ResponseText
 onlinecheck := StrReplace(StrReplace(onlinecheck, "`n"), "`r")
-msgbox %onlinecheck%
   if (localver !== onlinecheck)
   {
     msgbox, 4,, there is an update! Do you want to update?
