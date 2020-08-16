@@ -2,6 +2,8 @@
 Custom transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 [node.js](https://nodejs.org/en/)(Back-End) and [AutoHotkey](https://www.autohotkey.com/)(Front-End)
 
+![screenshot](2020-08-15_204233.png)
+
 # Installation
 ## Installing
 ### Downloaded sourcecode
