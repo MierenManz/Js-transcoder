@@ -29,7 +29,6 @@ Custom transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 
 # Changelog
 ## v1.7.1
-- 
 - Fixed a bug where the program would try to update if there was no update or internet
 - Fixed a bug where ffmpeg would still continue rendering even if the app was closed
 - Fixed a bug where cpu encoding sometimes didn't use all available cores and threads
