@@ -3,29 +3,33 @@ SendMode Input
 SetWorkingDir %A_ScriptDir%
 #SingleInstance, force
 Menu, Tray, Icon , %A_ScriptDir%\processing\icon.ico, 1, 1
-localver = v1.7.0
-localver := trim(localver)
-stop := 0
+localver := "v1.7.1"
 aspw := 16
 asph := 9
 reswidth := 1920
 resheight := 1080
-whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
-whr.Open("GET", "https://raw.githubusercontent.com/MierenManz/versiontest/master/README.md", true)
-whr.Send()
-whr.WaitForResponse()
-onlinecheck := whr.ResponseText
-onlinecheck := StrReplace(StrReplace(onlinecheck, "`n"), "`r")
-  if (localver !== onlinecheck)
-  {
-    msgbox, 4,, there is an update! Do you want to update?
-    IfMsgBox, Yes
-    {
-    run, %A_ScriptDir%\updates\updater.exe %onlinecheck%
-    exitapp
-  }
-}
 config := A_ScriptDir . "\processing\config.txt"
+try {
+	whr := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+	whr.Open("GET", "https://raw.githubusercontent.com/MierenManz/versiontest/master/README.md", true)
+	whr.Send()
+	whr.WaitForResponse()
+	onlinecheck := whr.ResponseText
+	onlinecheck := StrReplace(StrReplace(onlinecheck, "`n"), "`r")
+	if (localver != onlinecheck) {
+		msgbox, 4,, there is an update! Do you want to update?
+		IfMsgBox, Yes
+			{
+			run, %A_ScriptDir%\updates\updater.exe %onlinecheck%
+			exitapp
+		} else {
+		goto, start
+		}
+	}
+} catch e {
+	goto, start
+}
+start:
 if !FileExist(config)
 {
   runwait, %ComSpec% /c cd processing && npm install,, hide
@@ -192,7 +196,6 @@ Submit:
   gui, outputlog:Add, Edit, r1 vLOG +center ReadOnly x75 y135 w100
   gui, outputlog:Add, Edit, r1 vETR +center ReadOnly x176 y135 w100
   gui, outputlog:Show, w350 h235, Transcoder
-  start := A_TickCount
   StdOutStream( "node.exe " A_ScriptDir "\processing\transcoder.js " Inptfile, "main_Callback")
   return
 }
@@ -202,9 +205,14 @@ removetooltip:
   return
 }
 
+outputlogClose:
 mainguiClose:
 Close:
 {
+  Process, Exist, ffmpeg.exe
+	If (!ErrorLevel= 0) {
+		Process, Close, ffmpeg.exe
+  }
   exitapp
 }
 
@@ -214,14 +222,14 @@ StdOutStream( sCmd, Callback = "" ) {
   DllCall( "CreatePipe", UIntP,hPipeRead, UIntP,hPipeWrite, UInt,0, UInt,0 )
   DllCall( "SetHandleInformation", UInt,hPipeWrite, UInt,1, UInt,1 )
 
-  if(a_ptrSize=8){
+  if(a_ptrSize=8) {
     VarSetCapacity( STARTUPINFO, 104, 0  )
     NumPut( 68,         STARTUPINFO,  0 )
     NumPut( 0x100,      STARTUPINFO, 60 )
     NumPut( hPipeWrite, STARTUPINFO, 88 )
     NumPut( hPipeWrite, STARTUPINFO, 96 )
     VarSetCapacity( PROCESS_INFORMATION, 32 )
-  }else{
+  } else {
     VarSetCapacity( STARTUPINFO, 68, 0  )
     NumPut( 68,         STARTUPINFO,  0 )
     NumPut( 0x100,      STARTUPINFO, 44 )
@@ -287,7 +295,6 @@ main_Callback( data, n ) {
     case "stop":
       tooltip, Render Finished
       SetTimer, removetooltip, 5000
-      global stop = 1
       return
 }
 

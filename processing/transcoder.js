@@ -1,5 +1,6 @@
 var start = Math.floor(new Date().getTime() / 1000);
 const ffmpeg = require('fluent-ffmpeg');
+const os = require('os');
 const fs = require('fs');
 ffmpeg.setFfprobePath(__dirname + "/ffmpeg/ffprobe.exe");
 var inputfile = process.argv[2];
@@ -13,7 +14,8 @@ var USE_H265 = config[4];
 var vvwidth = config[5];
 var vvheight = config[6];
 var cpuresize = [];
-var gpuInputs = [];
+var cpu_threads = os.cpus().length;
+var gpuInputs = [`-threads ${cpu_threads}`];
 var H265gpu = USE_H265 + USE_GPU;
 ffmpeg.ffprobe(inputfile, (err, metadata) => {
     if (err) throw err;
@@ -75,7 +77,7 @@ ffmpeg.ffprobe(inputfile, (err, metadata) => {
         .videoCodec(codex)
         .on('progress', function(progress) {
             var percentage = Math.round((progress.percent + Number.EPSILON) * 100 / 100);
-            if (percentage > 100) percentage = 100;
+            if (percentage >= 100) percentage = 100;
             var etrcalc = 0;
             var current = Math.floor(new Date().getTime() / 1000);
             var timelefttotalS = Math.round(((current - start) / percentage) * (100 - percentage));

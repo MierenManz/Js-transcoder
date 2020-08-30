@@ -4,6 +4,12 @@ Custom transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 
 ![screenshot](2020-08-15_204233.png)
 
+# Installation
+### Downloaded release
+1. Download [node.js](https://nodejs.org/en/)
+2. Download the latest stable release
+3. Run main.exe
+
 # Troubleshooting
 1. If there is any problem, copy the error that you got
 3. copy that and make a new [issue](https://github.com/MierenManz/transcoder/issues/new)
@@ -23,6 +29,10 @@ Custom transcoder based of [FFMPEG](https://ffmpeg.org/) written in
 
 # Changelog
 ## v1.7.1
+- 
+- Fixed a bug where the program would try to update if there was no update or internet
+- Fixed a bug where ffmpeg would still continue rendering even if the app was closed
+- Fixed a bug where cpu encoding sometimes didn't use all available cores and threads
 - Removed annoying message boxes
 
 ## v1.7.0
